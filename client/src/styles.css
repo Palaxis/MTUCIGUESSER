@@ -1,0 +1,30 @@
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+.container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; gap: 16px; }
+.brand { font-weight: 700; }
+.links a { margin-left: 12px; text-decoration: none; }
+.links a.active { text-decoration: underline; }
+.page { display: grid; gap: 16px; }
+.controls { display: flex; gap: 8px; align-items: center; }
+.game { display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
+.prompt { display: grid; gap: 8px; }
+.prompt-image { width: 100%; border-radius: 8px; object-fit: cover; }
+.hint { opacity: 0.8; font-size: 14px; }
+.map-wrap { display: grid; gap: 8px; }
+.map-inner { position: relative; width: 100%; border: 1px solid #555; border-radius: 8px; overflow: hidden; }
+.map { display: block; width: 100%; height: auto; cursor: crosshair; }
+.pin { position: absolute; width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.4); }
+.pin.guess { background: #0ea5e9; }
+.pin.answer { background: #22c55e; }
+.actions { display: flex; gap: 12px; align-items: center; }
+
+.card { display: grid; gap: 12px; border: 1px solid #555; border-radius: 8px; padding: 12px; }
+.row { display: grid; gap: 6px; }
+label { opacity: 0.8; font-size: 13px; }
+input, select, button { padding: 8px 10px; border-radius: 6px; border: 1px solid #666; background: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+
