@@ -1,0 +1,262 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&display=swap');
+
+.home-page {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: #FFFFFF;
+  font-family: 'Montserrat', sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.home-circle {
+  position: absolute;
+  background: #372579;
+  border-radius: 50%;
+}
+
+.home-circle-1 {
+  width: 450px;
+  height: 450px;
+  left: 106px;
+  bottom: -200px;
+  filter: blur(205px);
+}
+
+.home-circle-2 {
+  width: 787px;
+  height: 787px;
+  right: -200px;
+  top: 96px;
+  filter: blur(375px);
+}
+
+.home-circle-3 {
+  width: 228px;
+  height: 228px;
+  left: -61px;
+  top: 0px;
+  filter: blur(110px);
+}
+
+.home-header {
+  position: relative;
+  padding: 80px 100px;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.home-logo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-logo-icon {
+  width: 49px;
+  height: 49px;
+  color: #372579;
+}
+
+.home-logo-text {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 49px;
+  color: #372579;
+}
+
+.home-auth-buttons {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.home-login-btn {
+  width: 144px;
+  height: 49px;
+  background: #372579;
+  border: none;
+  border-radius: 60px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 30px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.home-login-btn:hover {
+  background: #4a2f99;
+}
+
+.home-register-btn {
+  box-sizing: border-box;
+  width: 277px;
+  height: 49px;
+  background: #FFFFFF;
+  border: 2px solid #372579;
+  border-radius: 60px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 30px;
+  color: #372579;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.home-register-btn:hover {
+  background: #f5f5f5;
+}
+
+.home-profile-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  background: #FFFFFF;
+  border: 2px solid #372579;
+  border-radius: 60px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  color: #372579;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.home-profile-button:hover {
+  background: #f5f5f5;
+}
+
+.home-content {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  padding: 40px 20px;
+}
+
+.home-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+
+.home-start-btn {
+  box-sizing: border-box;
+  width: 320px;
+  height: 75px;
+  background: #FFFFFF;
+  border: 4px solid #372579;
+  border-radius: 60px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 37px;
+  color: #372579;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.home-start-btn:hover {
+  background: #372579;
+  color: #FFFFFF;
+}
+
+.home-rules-btn {
+  box-sizing: border-box;
+  width: 75px;
+  height: 75px;
+  background: #FFFFFF;
+  border: 4px solid #372579;
+  border-radius: 50%;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 37px;
+  color: #372579;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-rules-btn:hover {
+  background: #372579;
+  color: #FFFFFF;
+}
+
+.home-admin-link {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: transparent;
+  border: 2px solid #372579;
+  border-radius: 8px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  color: #372579;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.home-admin-link:hover {
+  background: #372579;
+  color: #FFFFFF;
+}
+
+@media (max-width: 768px) {
+  .home-header {
+    padding: 40px 20px;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .home-logo-text {
+    font-size: 30px;
+    line-height: 36px;
+  }
+
+  .home-auth-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .home-login-btn,
+  .home-register-btn {
+    width: 100%;
+    max-width: 277px;
+  }
+
+  .home-actions {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .home-start-btn {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+

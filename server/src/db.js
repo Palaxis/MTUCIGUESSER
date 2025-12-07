@@ -28,6 +28,7 @@ db.exec(`
     width_px INTEGER NOT NULL,
     height_px INTEGER NOT NULL
   );
+  
   CREATE TABLE IF NOT EXISTS locations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     floor_id INTEGER NOT NULL,
@@ -38,7 +39,47 @@ db.exec(`
     hint TEXT,
     FOREIGN KEY (floor_id) REFERENCES floors(id) ON DELETE CASCADE
   );
+  
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  
+  CREATE TABLE IF NOT EXISTS game_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    total_score INTEGER NOT NULL,
+    rounds_played INTEGER NOT NULL,
+    played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  
+  CREATE INDEX IF NOT EXISTS idx_game_results_score ON game_results(total_score DESC);
+  CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
+
+// Create default admin user
+import bcrypt from 'bcrypt';
+
+const adminEmail = 'admin@admin.com';
+const existingAdmin = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
+
+if (!existingAdmin) {
+  (async () => {
+    try {
+      const hashedPassword = await bcrypt.hash('admin', 10);
+      db.prepare('INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)')
+        .run('Admin', 'User', adminEmail, hashedPassword);
+      console.log('✅ Default admin user created (email: admin@admin.com, password: admin)');
+    } catch (err) {
+      console.error('Failed to create admin user:', err);
+    }
+  })();
+}
 
 export default db;
 

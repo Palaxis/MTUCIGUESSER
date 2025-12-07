@@ -1,0 +1,290 @@
+/* Страница входа */
+
+position: relative;
+width: 1440px;
+height: 1024px;
+
+background: #FFFFFF;
+
+
+/* Круги фон */
+
+position: absolute;
+width: 1440px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+
+
+/* Ellipse 2 */
+
+position: absolute;
+width: 450px;
+height: 450px;
+left: 106px;
+top: 535px;
+
+background: #372579;
+filter: blur(205px);
+
+
+/* Ellipse 4 */
+
+position: absolute;
+width: 787px;
+height: 787px;
+left: 1014px;
+top: 96px;
+
+background: #372579;
+filter: blur(375px);
+
+
+/* Ellipse 6 */
+
+position: absolute;
+width: 228px;
+height: 228px;
+left: -61px;
+top: 0px;
+
+background: #372579;
+filter: blur(110px);
+
+
+/* Лого мтуси */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+width: 372px;
+height: 49px;
+left: 100px;
+top: 80px;
+
+
+
+/* Лого МТУСИ */
+
+width: 49px;
+height: 49px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Polygon 1 */
+
+box-sizing: border-box;
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+border: 4px solid #372579;
+border-radius: 10px;
+
+
+/* MTUCI Guesser */
+
+width: 313px;
+height: 49px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 600;
+font-size: 40px;
+line-height: 49px;
+/* identical to box height */
+
+color: #372579;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Центр группа */
+
+position: absolute;
+width: 456px;
+height: 433px;
+left: 492px;
+top: 340px;
+
+
+
+/* Кнопка создать аккаунт */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 277px;
+height: 49px;
+left: calc(50% - 277px/2 + 0.5px);
+top: 384px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Создать аккаунт */
+
+position: absolute;
+width: 215px;
+height: 30px;
+left: calc(50% - 215px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Окно входа */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 456px;
+height: 344px;
+left: calc(50% - 456px/2);
+top: calc(50% - 344px/2 - 44.5px);
+
+background: #FFFFFF;
+border: 4px solid #372579;
+border-radius: 20px;
+
+
+/* Поле логин */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 40px;
+top: 97px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите логин */
+
+position: absolute;
+width: 189px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Поле пароль */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 40px;
+top: 166px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите пароль */
+
+position: absolute;
+width: 206px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Вход */
+
+position: absolute;
+width: 78px;
+height: 37px;
+left: 189px;
+top: 40px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 30px;
+line-height: 37px;
+/* identical to box height */
+
+color: #372579;
+
+
+
+/* Кнопка войти */
+
+position: absolute;
+width: 144px;
+height: 49px;
+left: 156px;
+top: 255px;
+
+background: #372579;
+border-radius: 60px;
+
+
+/* Войти */
+
+position: absolute;
+width: 82px;
+height: 30px;
+left: calc(50% - 82px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+

@@ -1,0 +1,1762 @@
+/* UI Kit */
+
+position: relative;
+width: 2200px;
+height: 1553px;
+
+background: #5E5E5E;
+
+
+/* Кнопка создать аккаунт */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 277px;
+height: 49px;
+left: 74px;
+top: 356px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Создать аккаунт */
+
+position: absolute;
+width: 215px;
+height: 30px;
+left: calc(50% - 215px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Кнопка старт */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 320px;
+height: 75px;
+left: 1423px;
+top: 481px;
+
+background: #FFFFFF;
+border: 4px solid #372579;
+border-radius: 60px;
+
+
+/* Начать игру */
+
+position: absolute;
+width: 192px;
+height: 37px;
+left: calc(50% - 192px/2);
+top: calc(50% - 37px/2);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 30px;
+line-height: 37px;
+/* identical to box height */
+
+color: #372579;
+
+
+
+/* Кнопка вопрос */
+
+position: absolute;
+width: 75px;
+height: 75px;
+left: 2093px;
+top: 436px;
+
+
+
+/* Ellipse 1 */
+
+box-sizing: border-box;
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: #FFFFFF;
+border: 4px solid #372579;
+
+
+/* ? */
+
+position: absolute;
+width: 18px;
+height: 37px;
+left: calc(50% - 18px/2 - 0.5px);
+top: calc(50% - 37px/2);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 30px;
+line-height: 37px;
+/* identical to box height */
+
+color: #372579;
+
+
+
+/* Лого МТУСИ */
+
+position: absolute;
+width: 49px;
+height: 49px;
+left: 2012px;
+top: 443px;
+
+
+
+/* Polygon 1 */
+
+box-sizing: border-box;
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+border: 4px solid #372579;
+border-radius: 10px;
+
+
+/* Окно регистрации */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 456px;
+height: 482px;
+left: calc(50% - 456px/2 - 78px);
+top: calc(50% - 482px/2 - 487.5px);
+
+background: #FFFFFF;
+border: 4px solid #372579;
+border-radius: 20px;
+
+
+/* Поле имя */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 40px;
+top: 97px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите имя */
+
+position: absolute;
+width: 165px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Поле фамилия */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 40px;
+top: 166px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите фамилию */
+
+position: absolute;
+width: 236px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Поле почта */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 40px;
+top: 235px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите вашу почту */
+
+position: absolute;
+width: 257px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Давайте знакомиться */
+
+position: absolute;
+width: 343px;
+height: 37px;
+left: calc(50% - 343px/2 + 0.5px);
+top: 40px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 30px;
+line-height: 37px;
+/* identical to box height */
+
+color: #372579;
+
+
+
+/* Кнопка фиолет создать аккаунт */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 277px;
+height: 49px;
+left: calc(50% - 277px/2 + 0.5px);
+top: 393px;
+
+background: #372579;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Создать аккаунт */
+
+position: absolute;
+width: 215px;
+height: 30px;
+left: calc(50% - 215px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Поле пароль */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 40px;
+top: 304px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите пароль */
+
+position: absolute;
+width: 206px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Кнопка фиолет создать аккаунт */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 277px;
+height: 49px;
+left: calc(50% - 277px/2 - 503.5px);
+top: 363px;
+
+background: #372579;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Создать аккаунт */
+
+position: absolute;
+width: 215px;
+height: 30px;
+left: calc(50% - 215px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Поле почта */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 408px;
+top: 205px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите вашу почту */
+
+position: absolute;
+width: 257px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Поле фамилия */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 408px;
+top: 136px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите фамилию */
+
+position: absolute;
+width: 236px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Поле имя */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 408px;
+top: 67px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите имя */
+
+position: absolute;
+width: 165px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Окно входа */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 456px;
+height: 344px;
+left: calc(50% - 456px/2 + 785px);
+top: calc(50% - 344px/2 - 537.5px);
+
+background: #FFFFFF;
+border: 4px solid #372579;
+border-radius: 20px;
+
+
+/* Поле логин */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 40px;
+top: 97px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите логин */
+
+position: absolute;
+width: 189px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Поле пароль */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 40px;
+top: 166px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите пароль */
+
+position: absolute;
+width: 206px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Вход */
+
+position: absolute;
+width: 78px;
+height: 37px;
+left: 189px;
+top: 40px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 30px;
+line-height: 37px;
+/* identical to box height */
+
+color: #372579;
+
+
+
+/* Кнопка войти */
+
+position: absolute;
+width: 144px;
+height: 49px;
+left: 156px;
+top: 255px;
+
+background: #372579;
+border-radius: 60px;
+
+
+/* Войти */
+
+position: absolute;
+width: 82px;
+height: 30px;
+left: calc(50% - 82px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Кнопка войти */
+
+position: absolute;
+width: 144px;
+height: 49px;
+left: 140px;
+top: 231px;
+
+background: #372579;
+border-radius: 60px;
+
+
+/* Войти */
+
+position: absolute;
+width: 82px;
+height: 30px;
+left: calc(50% - 82px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Поле пароль */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 24px;
+top: 142px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите пароль */
+
+position: absolute;
+width: 206px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Поле логин */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 376px;
+height: 49px;
+left: 24px;
+top: 73px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Введите логин */
+
+position: absolute;
+width: 189px;
+height: 30px;
+left: 20px;
+top: 10px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 200;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Лого мтуси */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+width: 372px;
+height: 49px;
+left: 650px;
+top: 631px;
+
+
+
+/* Лого МТУСИ */
+
+width: 49px;
+height: 49px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Polygon 1 */
+
+box-sizing: border-box;
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+border: 4px solid #372579;
+border-radius: 10px;
+
+
+/* MTUCI Guesser */
+
+width: 313px;
+height: 49px;
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 600;
+font-size: 40px;
+line-height: 49px;
+/* identical to box height */
+
+color: #372579;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Кнопка профиля */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 49px;
+height: 49px;
+left: 1943px;
+top: 435px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 37.5px;
+
+
+/* user */
+
+position: absolute;
+width: 25px;
+height: 25px;
+left: calc(50% - 25px/2);
+top: calc(50% - 25px/2);
+
+
+
+/* Vector */
+
+position: absolute;
+left: 29.17%;
+right: 29.17%;
+top: 14.58%;
+bottom: 43.75%;
+
+border: 2px solid #372579;
+
+
+/* Vector */
+
+position: absolute;
+left: 20.83%;
+right: 20.83%;
+top: 58.75%;
+bottom: 12.08%;
+
+border: 2px solid #372579;
+
+
+/* 2 этаж */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 250px;
+height: 49px;
+left: 1294px;
+top: 180px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 10px;
+
+
+/* 2 этаж */
+
+position: absolute;
+width: 84px;
+height: 30px;
+left: calc(50% - 84px/2 + 3px);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* 3 этаж */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 250px;
+height: 49px;
+left: 1294px;
+top: 249px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 10px;
+
+
+/* 3 этаж */
+
+position: absolute;
+width: 84px;
+height: 30px;
+left: calc(50% - 84px/2 + 3px);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* 4 этаж */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 250px;
+height: 49px;
+left: 1294px;
+top: 318px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 10px;
+
+
+/* 4 этаж */
+
+position: absolute;
+width: 86px;
+height: 30px;
+left: calc(50% - 86px/2 + 4px);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* 5 этаж */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 250px;
+height: 49px;
+left: 1294px;
+top: 387px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 10px;
+
+
+/* 5 этаж */
+
+position: absolute;
+width: 84px;
+height: 30px;
+left: calc(50% - 84px/2 + 3px);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* 1 этаж */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 250px;
+height: 49px;
+left: 1294px;
+top: 111px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 10px;
+
+
+/* 1 этаж */
+
+position: absolute;
+width: 79px;
+height: 30px;
+left: calc(50% - 79px/2 + 0.5px);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Карта */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 517px;
+height: 276px;
+left: 62px;
+top: 518px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 10px;
+
+
+/* Плюсик */
+
+position: absolute;
+width: 30px;
+height: 30px;
+left: 784px;
+top: 718px;
+
+
+
+/* Ellipse 12 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 30px;
+height: 30px;
+left: 0px;
+top: 0px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+
+
+/* Плюс */
+
+position: absolute;
+width: 20px;
+height: 20px;
+left: 5px;
+top: 5px;
+
+
+
+/* Rectangle 1 */
+
+position: absolute;
+width: 20px;
+height: 2px;
+left: 0px;
+top: 9px;
+
+background: #372579;
+
+
+/* Rectangle 2 */
+
+position: absolute;
+width: 20px;
+height: 2px;
+left: 9px;
+top: 0px;
+
+background: #372579;
+transform: rotate(-90deg);
+
+
+/* Минус */
+
+position: absolute;
+width: 30px;
+height: 30px;
+left: 725px;
+top: 718px;
+
+
+
+/* Ellipse 12 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 30px;
+height: 30px;
+left: 0px;
+top: 0px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+
+
+/* Rectangle 1 */
+
+position: absolute;
+width: 20px;
+height: 2px;
+left: 5px;
+top: 14px;
+
+background: #372579;
+
+
+/* Кнопка готово */
+
+position: absolute;
+width: 148px;
+height: 49px;
+left: 381px;
+top: 445px;
+
+background: #372579;
+border-radius: 60px;
+
+
+/* Готово */
+
+position: absolute;
+width: 86px;
+height: 30px;
+left: calc(50% - 86px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Кнопка следующий раунд */
+
+position: absolute;
+width: 309px;
+height: 49px;
+left: 1100px;
+top: 607px;
+
+background: #372579;
+border-radius: 60px;
+
+
+/* Следующий раунд */
+
+position: absolute;
+width: 247px;
+height: 30px;
+left: calc(50% - 247px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Позиция игрока плашка */
+
+position: absolute;
+width: 605px;
+height: 40px;
+left: 1164px;
+top: 703px;
+
+background: #FFFFFF;
+border-radius: 4px;
+
+
+/* Кнопка пройти заново */
+
+position: absolute;
+width: 263px;
+height: 49px;
+left: calc(50% - 263px/2 + 537.5px);
+top: 598px;
+
+background: #372579;
+border-radius: 60px;
+
+
+/* Следующий раунд */
+
+position: absolute;
+width: 201px;
+height: 30px;
+left: calc(50% - 201px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Плюс добавить */
+
+position: absolute;
+width: 24px;
+height: 24px;
+left: 872px;
+top: 724px;
+
+
+
+/* Ellipse 12 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 24px;
+height: 24px;
+left: 0px;
+top: 0px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+
+
+/* Плюс */
+
+position: absolute;
+width: 16px;
+height: 16px;
+left: 4px;
+top: 4px;
+
+
+
+/* Rectangle 1 */
+
+position: absolute;
+width: 16px;
+height: 2px;
+left: 0px;
+top: 7px;
+
+background: #372579;
+
+
+/* Rectangle 2 */
+
+position: absolute;
+width: 16px;
+height: 2px;
+left: 7px;
+top: 0px;
+
+background: #372579;
+transform: rotate(-90deg);
+
+
+/* Поле на странице аккаунта */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 400px;
+height: 49px;
+left: 1144px;
+top: 763px;
+
+background: #FFFFFF;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Кнопка сохранить изменения */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 357px;
+height: 49px;
+left: calc(50% - 357px/2 + 806.5px);
+top: 752px;
+
+background: #372579;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Сохранить изменения */
+
+position: absolute;
+width: 295px;
+height: 30px;
+left: calc(50% - 295px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Кнопка прочитал */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 192px;
+height: 49px;
+left: calc(50% - 192px/2 + 777px);
+top: 859px;
+
+background: #372579;
+border: 2px solid #372579;
+border-radius: 60px;
+
+
+/* Прочитал */
+
+position: absolute;
+width: 130px;
+height: 30px;
+left: calc(50% - 130px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Кнопка аккаунт */
+
+position: absolute;
+width: 248px;
+height: 49px;
+left: 374px;
+top: 881px;
+
+background: #FFFFFF;
+border-radius: 4px;
+
+
+/* Аккаунт */
+
+position: absolute;
+width: 107px;
+height: 30px;
+left: calc(50% - 107px/2 - 0.5px);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Выйти */
+
+position: absolute;
+width: 248px;
+height: 49px;
+left: 699px;
+top: 881px;
+
+background: #FFFFFF;
+border-radius: 4px;
+
+
+/* Выйти */
+
+position: absolute;
+width: 86px;
+height: 30px;
+left: calc(50% - 86px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #F33F3F;
+
+
+
+/* Кнопка аккаунт */
+
+position: absolute;
+width: 248px;
+height: 49px;
+left: 1009px;
+top: 875px;
+
+background: #DFD6FF;
+border-radius: 4px;
+
+
+/* Аккаунт */
+
+position: absolute;
+width: 107px;
+height: 30px;
+left: calc(50% - 107px/2 - 0.5px);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Меню аккаунт */
+
+position: absolute;
+width: 250px;
+height: 100px;
+left: 62px;
+top: 864px;
+
+background: #FFFFFF;
+border-radius: 4px;
+
+
+/* Кнопка аккаунт */
+
+position: absolute;
+width: 248px;
+height: 49px;
+left: 1px;
+top: 1px;
+
+background: #FFFFFF;
+border-radius: 4px;
+
+
+/* Аккаунт */
+
+position: absolute;
+width: 107px;
+height: 30px;
+left: calc(50% - 107px/2 - 0.5px);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Выйти */
+
+position: absolute;
+width: 248px;
+height: 49px;
+left: 1px;
+top: 50px;
+
+background: #FFFFFF;
+border-radius: 4px;
+
+
+/* Выйти */
+
+position: absolute;
+width: 86px;
+height: 30px;
+left: calc(50% - 86px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #F33F3F;
+
+
+
+/* Стрелка вправо */
+
+position: absolute;
+width: 80px;
+height: 80px;
+left: 1964px;
+top: 590px;
+
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+
+/* Vector */
+
+position: absolute;
+height: 67.37px;
+left: 7.89%;
+right: 7.89%;
+top: calc(50% - 67.37px/2 + 0px);
+
+border: 3px solid #372579;
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+
+/* Vector */
+
+position: absolute;
+left: 44.74%;
+right: 42.11%;
+top: 34.21%;
+bottom: 34.21%;
+
+border: 3px solid #372579;
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+
+/* Стрелка влево */
+
+position: absolute;
+width: 80px;
+height: 80px;
+left: 1866px;
+top: 590px;
+
+
+
+/* Vector */
+
+position: absolute;
+height: 67.37px;
+left: 7.89%;
+right: 7.89%;
+top: calc(50% - 67.37px/2 + 0px);
+
+border: 3px solid #372579;
+
+
+/* Vector */
+
+position: absolute;
+left: 42.11%;
+right: 44.74%;
+top: 34.21%;
+bottom: 34.21%;
+
+border: 3px solid #372579;
+
+
+/* Группа кнопок */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 20px;
+
+position: absolute;
+width: 415px;
+height: 75px;
+left: 1309px;
+top: 958px;
+
+
+
+/* Кнопка старт */
+
+width: 320px;
+height: 75px;
+
+background: #372579;
+border-radius: 60px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Начать игру */
+
+position: absolute;
+width: 192px;
+height: 37px;
+left: calc(50% - 192px/2);
+top: calc(50% - 37px/2);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 30px;
+line-height: 37px;
+/* identical to box height */
+
+color: #FFFFFF;
+
+
+
+/* Кнопка вопрос */
+
+width: 75px;
+height: 75px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Ellipse 1 */
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: #372579;
+
+
+/* ? */
+
+position: absolute;
+width: 18px;
+height: 37px;
+left: calc(50% - 18px/2 - 0.5px);
+top: calc(50% - 37px/2);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 30px;
+line-height: 37px;
+/* identical to box height */
+
+color: #FFFFFF;
+
+
+
+/* Polygon 2 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 32.91px;
+height: 47.25px;
+left: 1542px;
+top: 1005px;
+
+background: #000000;
+border: 2px solid #8B8B8B;
+transform: rotate(-45deg);
+
+
+/* Polygon 3 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 32.91px;
+height: 47.25px;
+left: 1677px;
+top: 1005px;
+
+background: #000000;
+border: 2px solid #8B8B8B;
+transform: rotate(-45deg);
+
+
+/* Polygon 5 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 32.91px;
+height: 47.25px;
+left: 1679px;
+top: 881px;
+
+background: #000000;
+border: 2px solid #8B8B8B;
+transform: rotate(-45deg);
+
+
+/* Кнопка создать аккаунт */
+
+position: absolute;
+width: 277px;
+height: 49px;
+left: 1482px;
+top: 860px;
+
+background: #372579;
+border-radius: 60px;
+
+
+/* Создать аккаунт */
+
+position: absolute;
+width: 215px;
+height: 30px;
+left: calc(50% - 215px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #FFFFFF;
+
+
+
+/* Кнопка войти */
+
+position: absolute;
+width: 144px;
+height: 49px;
+left: 1310px;
+top: 857px;
+
+background: #FFFFFF;
+border-radius: 60px;
+
+
+/* Войти */
+
+position: absolute;
+width: 82px;
+height: 30px;
+left: calc(50% - 82px/2);
+top: calc(50% - 30px/2 + 0.5px);
+
+font-family: 'Montserrat';
+font-style: normal;
+font-weight: 500;
+font-size: 25px;
+line-height: 30px;
+
+color: #372579;
+
+
+
+/* Polygon 4 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 32.91px;
+height: 47.25px;
+left: 1387px;
+top: 881px;
+
+background: #000000;
+border: 2px solid #8B8B8B;
+transform: rotate(-45deg);

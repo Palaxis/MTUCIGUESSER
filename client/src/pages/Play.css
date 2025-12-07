@@ -1,0 +1,517 @@
+/* Импорт шрифта Montserrat */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&display=swap');
+
+/* Основная страница */
+.play-page {
+  position: relative;
+  width: 100%;
+  height: 100vh; /* Фиксированная высота во весь экран */
+  background: #FFFFFF;
+  font-family: 'Montserrat', sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Скрываем скролл страницы */
+}
+
+/* Шапка */
+.play-header {
+  width: 100%;
+  height: 89px;
+  background: #372579;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 50px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.play-logo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.play-logo-icon {
+  width: 49px;
+  height: 49px;
+  color: #FFFFFF;
+}
+
+.play-logo-text {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 49px;
+  color: #FFFFFF;
+}
+
+.play-profile-btn,
+.play-header .profile-menu-btn {
+  box-sizing: border-box;
+  width: 49px;
+  height: 49px;
+  background: #372579;
+  border: 2px solid #FFFFFF;
+  border-radius: 37.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.play-profile-btn:hover,
+.play-header .profile-menu-btn:hover {
+  background: #4a2f99;
+}
+
+/* Индикатор раунда */
+.play-round-indicator {
+  width: 100%;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 30px;
+  color: #372579;
+  padding: 20px 0 10px;
+  flex-shrink: 0;
+  background: #FFFFFF;
+}
+
+/* ===== РЕЖИМ ПРОСМОТРА ФОТО ===== */
+.play-content-photo {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 50px 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.play-photo-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1240px;
+  /* Высота адаптируется под доступное место минус кнопка */
+  height: calc(100% - 80px); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.play-photo-big {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border: 1px solid #372579;
+  border-radius: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: grab;
+  user-select: none;
+  background: #f5f5f5; /* Чтобы было видно контейнер если фото грузится */
+}
+
+.play-photo-big:active {
+  cursor: grabbing;
+}
+
+.play-photo-big::-webkit-scrollbar {
+  height: 0;
+}
+
+.play-photo-big .play-photo {
+  height: 100%;
+  width: auto;
+  max-width: none; /* Важно для панорамы */
+  display: block;
+}
+
+.play-content-photo .play-arrow {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 20;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.play-content-photo .play-arrow-left {
+  left: -70px;
+}
+
+.play-content-photo .play-arrow-right {
+  right: -70px;
+}
+
+.play-ready-btn {
+  width: 148px;
+  height: 49px;
+  background: #372579;
+  border: none;
+  border-radius: 60px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 30px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.play-ready-btn:hover {
+  background: #4a2f99;
+}
+
+/* ===== РЕЖИМ ВЫБОРА НА КАРТЕ ===== */
+.play-content-map {
+  flex: 1;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 10px 50px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.play-question {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 39px;
+  color: #372579;
+  text-align: center;
+  margin: 0 0 10px;
+  flex-shrink: 0;
+}
+
+.play-map-layout {
+  position: relative;
+  width: 100%;
+  flex: 1; /* Занимаем всё доступное место */
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  min-height: 0; /* Важно для flex-контейнера */
+}
+
+/* Секция с картой */
+.play-map-section {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0; /* Важно для сжатия */
+}
+
+.play-map-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 30px;
+  color: #372579;
+  margin: 0;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.play-map-container {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%; /* На всю высоту родителя */
+  position: relative;
+  background: #FFFFFF;
+  border: 2px solid #372579;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.play-map-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.play-map-wrapper {
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.play-map {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  user-select: none;
+}
+
+.play-map-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  color: #372579;
+}
+
+/* Zoom controls */
+.play-zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.play-zoom-btn {
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  background: #FFFFFF;
+  border: 2px solid #372579;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.play-zoom-btn:hover:not(:disabled) {
+  background: #372579;
+}
+
+.play-zoom-btn:hover:not(:disabled) .play-zoom-icon {
+  color: #FFFFFF;
+}
+
+.play-zoom-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: #ccc;
+}
+
+.play-zoom-btn:disabled .play-zoom-icon {
+  color: #ccc;
+}
+
+.play-zoom-icon {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  color: #372579;
+  line-height: 1;
+}
+
+.play-zoom-reset .play-zoom-icon {
+  font-size: 16px;
+}
+
+/* Pin */
+.play-pin {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.play-pin-guess {
+  background: #FF0000;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Правая колонка (превью + выбор этажа) */
+.play-sidebar {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+/* Превью фото */
+.play-photo-preview {
+  width: 100%;
+  height: 150px; /* Фиксированная высота для превью */
+  position: relative;
+  border: 1px solid #372579;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.play-photo-small {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.play-fullscreen-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 30px;
+  height: 30px;
+  background: #FFFFFF;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.play-fullscreen-btn:hover {
+  background: #f0f0f0;
+}
+
+/* Выбор этажа */
+.play-floor-selection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto; /* Если много этажей */
+}
+
+.play-floor-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 30px;
+  color: #372579;
+  margin: 0 0 5px;
+  text-align: center;
+}
+
+.play-floor-option {
+  box-sizing: border-box;
+  width: 100%;
+  height: 49px;
+  background: #FFFFFF;
+  border: 2px solid #372579;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.play-floor-option:has(.play-floor-radio:checked) {
+  background: #372579;
+  border-width: 4px;
+}
+
+.play-floor-option:has(.play-floor-radio:checked) .play-floor-label {
+  color: #FFFFFF;
+}
+
+.play-floor-radio {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.play-floor-label {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 30px;
+  color: #372579;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Кнопка ответа */
+.play-submit-btn {
+  align-self: center;
+  width: 148px;
+  height: 49px;
+  background: #372579;
+  border: none;
+  border-radius: 60px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 30px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.play-submit-btn:hover:not(:disabled) {
+  background: #4a2f99;
+}
+
+.play-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Адаптив для маленьких экранов */
+@media (max-height: 800px) {
+  .play-header {
+    height: 60px;
+  }
+  .play-logo-text {
+    font-size: 24px;
+  }
+  .play-logo-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .play-round-indicator {
+    font-size: 20px;
+    padding: 10px 0 5px;
+  }
+  .play-question {
+    font-size: 24px;
+    margin-bottom: 5px;
+  }
+  .play-map-title, .play-floor-title {
+    font-size: 20px;
+  }
+  .play-floor-option {
+    height: 40px;
+  }
+  .play-floor-label {
+    font-size: 20px;
+  }
+  .play-submit-btn, .play-ready-btn {
+    height: 40px;
+    font-size: 20px;
+    line-height: 24px;
+  }
+}
