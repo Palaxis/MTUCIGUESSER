@@ -4,6 +4,7 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background: #FFFFFF;
   font-family: 'Montserrat', sans-serif;
 }
@@ -16,7 +17,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 100px;
+  padding: 0 80px;
+  box-sizing: border-box;
+  z-index: 100;
 }
 
 .leaderboard-logo {
@@ -24,6 +27,7 @@
   flex-direction: row;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
 }
 
 .leaderboard-logo-icon {
@@ -53,10 +57,36 @@
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
+  flex-shrink: 0;
 }
 
 .leaderboard-profile-btn:hover {
   background: #4a2f99;
+}
+
+/* Стили ProfileMenu для тёмного хедера */
+.leaderboard-header .profile-menu-btn {
+  box-sizing: border-box;
+  width: 49px;
+  height: 49px;
+  background: #372579;
+  border: 2px solid #FFFFFF;
+  border-radius: 37.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.leaderboard-header .profile-menu-btn:hover {
+  background: #4a2f99;
+}
+
+.leaderboard-header .profile-menu-btn svg circle,
+.leaderboard-header .profile-menu-btn svg path {
+  stroke: #FFFFFF;
 }
 
 .leaderboard-content {
@@ -87,7 +117,7 @@
 
 .leaderboard-row {
   display: grid;
-  grid-template-columns: 100px 1fr 210px;
+  grid-template-columns: 80px 1fr 180px;
   min-height: 40px;
   background: #FFFFFF;
   align-items: center;
@@ -110,8 +140,8 @@
 .leaderboard-cell {
   font-family: 'Montserrat', sans-serif;
   font-weight: 500;
-  font-size: 25px;
-  line-height: 30px;
+  font-size: 22px;
+  line-height: 28px;
   color: #372579;
   padding: 10px;
   display: flex;
@@ -137,7 +167,6 @@
 }
 
 .leaderboard-cell:nth-child(2) {
-  /* Колонка с именем - может обрезаться */
   min-width: 0;
 }
 
@@ -201,39 +230,141 @@
   background: #4a2f99;
 }
 
+/* Планшеты */
+@media (max-width: 1024px) {
+  .leaderboard-header {
+    padding: 0 40px;
+  }
+
+  .leaderboard-logo-text {
+    font-size: 32px;
+  }
+
+  .leaderboard-title {
+    font-size: 32px;
+  }
+
+  .leaderboard-user-score {
+    font-size: 32px;
+  }
+}
+
+/* Мобильные */
 @media (max-width: 768px) {
   .leaderboard-header {
     padding: 0 20px;
+    height: 70px;
   }
 
-  .leaderboard-title,
+  .leaderboard-logo-text {
+    display: none;
+  }
+
+  .leaderboard-logo-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .leaderboard-profile-btn,
+  .leaderboard-header .profile-menu-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .leaderboard-content {
+    padding: 30px 15px;
+  }
+
+  .leaderboard-title {
+    font-size: 28px;
+    line-height: 34px;
+    margin-bottom: 30px;
+  }
+
   .leaderboard-user-score {
-    font-size: 30px;
-    line-height: 36px;
+    font-size: 28px;
+    line-height: 34px;
   }
 
   .leaderboard-table {
     max-width: 100%;
+    border-width: 2px;
   }
 
   .leaderboard-row {
-    grid-template-columns: 60px 1fr 140px;
+    grid-template-columns: 50px 1fr 100px;
   }
 
-  .leaderboard-table-cell,
+  .leaderboard-header-row {
+    border-bottom-width: 2px;
+  }
+
   .leaderboard-cell {
-    font-size: 18px;
-    line-height: 22px;
+    font-size: 16px;
+    line-height: 20px;
+    padding: 8px;
   }
 
   .leaderboard-user-rank {
-    font-size: 20px;
+    font-size: 18px;
+  }
+
+  .leaderboard-new-record {
+    font-size: 22px;
   }
 
   .leaderboard-play-again-btn {
     font-size: 20px;
     width: 100%;
     max-width: 263px;
+    height: 48px;
   }
 }
 
+/* Маленькие мобильные */
+@media (max-width: 480px) {
+  .leaderboard-header {
+    padding: 0 15px;
+    height: 60px;
+  }
+
+  .leaderboard-logo-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .leaderboard-content {
+    padding: 20px 10px;
+  }
+
+  .leaderboard-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .leaderboard-user-score {
+    font-size: 24px;
+  }
+
+  .leaderboard-row {
+    grid-template-columns: 40px 1fr 80px;
+  }
+
+  .leaderboard-cell {
+    font-size: 14px;
+    padding: 6px;
+  }
+
+  .leaderboard-user-rank {
+    font-size: 16px;
+  }
+
+  .leaderboard-new-record {
+    font-size: 18px;
+  }
+
+  .leaderboard-play-again-btn {
+    font-size: 18px;
+    height: 44px;
+  }
+}

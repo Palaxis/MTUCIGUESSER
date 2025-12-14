@@ -1,21 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { userApi, User } from '../shared/api'
 import './AccountPage.css'
-
-interface User {
-  id: number
-  first_name: string
-  last_name: string
-  email: string
-}
 
 interface AccountPageProps {
   user: User
   onLogout: () => void
   onUpdate: (user: User) => void
+  onNavigateToHome: () => void
 }
 
-export default function AccountPage({ user, onLogout, onUpdate }: AccountPageProps) {
+export default function AccountPage({ user, onLogout, onUpdate, onNavigateToHome }: AccountPageProps) {
   const [firstName, setFirstName] = useState(user.first_name)
   const [lastName, setLastName] = useState(user.last_name)
   const [email, setEmail] = useState(user.email)
@@ -42,10 +36,15 @@ export default function AccountPage({ user, onLogout, onUpdate }: AccountPagePro
         data.password = password
       }
 
-      const response = await axios.put(`/api/users/${user.id}`, data)
-      onUpdate(response.data)
-      setMessage('Изменения сохранены')
+      const updatedUser = await userApi.update(user.id, data)
+      onUpdate(updatedUser)
+      setMessage('Изменения сохранены!')
       setPassword('')
+      
+      // Редирект на главную через 1.5 секунды
+      setTimeout(() => {
+        onNavigateToHome()
+      }, 1500)
     } catch (err: any) {
       setMessage(err.response?.data?.error || 'Ошибка сохранения')
     }

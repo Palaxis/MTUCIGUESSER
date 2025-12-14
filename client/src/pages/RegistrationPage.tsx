@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import axios from 'axios'
 import './RegistrationPage.css'
 
 interface RegistrationPageProps {
-  onRegister: (user: any) => void
+  onRegister: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
   onNavigateToLogin: () => void
 }
 
@@ -19,13 +18,7 @@ export default function RegistrationPage({ onRegister, onNavigateToLogin }: Regi
     setError('')
 
     try {
-      const response = await axios.post('/api/auth/register', {
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        password
-      })
-      onRegister(response.data.user)
+      await onRegister(email, password, firstName, lastName)
     } catch (err: any) {
       setError(err.response?.data?.error || 'Ошибка регистрации')
     }

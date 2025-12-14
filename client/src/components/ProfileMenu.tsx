@@ -42,7 +42,8 @@ export default function ProfileMenu({ onNavigateToAccount, onLogout }: ProfileMe
           <div className="profile-menu-arrow"></div>
           <button 
             className="profile-menu-item profile-menu-item-account" 
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation()
               setIsOpen(false)
               onNavigateToAccount()
             }}
@@ -51,7 +52,8 @@ export default function ProfileMenu({ onNavigateToAccount, onLogout }: ProfileMe
           </button>
           <button 
             className="profile-menu-item profile-menu-item-logout" 
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation()
               setIsOpen(false)
               onLogout()
             }}

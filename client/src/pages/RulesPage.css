@@ -6,12 +6,15 @@
   left: 0;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   background: rgba(255, 255, 255, 0.9);
   font-family: 'Montserrat', sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .rules-background {
@@ -56,13 +59,14 @@
   box-sizing: border-box;
   position: relative;
   width: 900px;
-  max-width: 95%;
+  max-width: 100%;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   background: #FFFFFF;
   border: 4px solid #372579;
   border-radius: 20px;
-  padding: 40px 25px;
+  padding: 40px 30px;
   z-index: 10;
 }
 
@@ -80,7 +84,7 @@
   font-family: 'Montserrat', sans-serif;
   font-weight: 500;
   font-size: 18px;
-  line-height: 22px;
+  line-height: 26px;
   text-align: center;
   color: #372579;
   margin: 0 0 40px;
@@ -110,9 +114,24 @@
   border-color: #4a2f99;
 }
 
-@media (max-width: 768px) {
+/* Планшеты */
+@media (max-width: 1024px) {
   .rules-modal {
-    padding: 30px 15px;
+    width: 700px;
+    padding: 35px 25px;
+  }
+}
+
+/* Мобильные */
+@media (max-width: 768px) {
+  .rules-page {
+    padding: 15px;
+  }
+
+  .rules-modal {
+    padding: 30px 20px;
+    border-width: 3px;
+    border-radius: 15px;
   }
 
   .rules-title {
@@ -123,15 +142,64 @@
 
   .rules-text {
     font-size: 16px;
-    line-height: 20px;
+    line-height: 24px;
     padding: 0 10px;
+    margin-bottom: 30px;
+  }
+
+  .rules-close-btn {
+    font-size: 22px;
+    height: 48px;
+    width: 170px;
+  }
+
+  /* Уменьшаем размытые круги */
+  .rules-circle-1 {
+    width: 250px;
+    height: 250px;
+    filter: blur(120px);
+  }
+
+  .rules-circle-2 {
+    width: 400px;
+    height: 400px;
+    filter: blur(200px);
+  }
+
+  .rules-circle-3 {
+    width: 150px;
+    height: 150px;
+    filter: blur(80px);
+  }
+}
+
+/* Маленькие мобильные */
+@media (max-width: 480px) {
+  .rules-page {
+    padding: 10px;
+  }
+
+  .rules-modal {
+    padding: 25px 15px;
+    max-height: 95vh;
+    max-height: 95dvh;
+  }
+
+  .rules-title {
+    font-size: 22px;
+    margin-bottom: 25px;
+  }
+
+  .rules-text {
+    font-size: 14px;
+    line-height: 22px;
+    padding: 0 5px;
+    margin-bottom: 25px;
   }
 
   .rules-close-btn {
     font-size: 20px;
-    width: 100%;
-    max-width: 192px;
+    height: 44px;
+    width: 150px;
   }
 }
-
-

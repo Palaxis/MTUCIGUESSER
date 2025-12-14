@@ -4,9 +4,10 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background: #FFFFFF;
   font-family: 'Montserrat', sans-serif;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .login-background {
@@ -49,7 +50,7 @@
 
 .login-header {
   position: relative;
-  padding: 80px 100px 40px;
+  padding: 60px 80px 40px;
   z-index: 10;
 }
 
@@ -58,6 +59,7 @@
   flex-direction: row;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
 }
 
 .login-logo-icon {
@@ -124,8 +126,8 @@
   margin-bottom: 20px;
   font-family: 'Montserrat', sans-serif;
   font-weight: 200;
-  font-size: 25px;
-  line-height: 30px;
+  font-size: 22px;
+  line-height: 28px;
   color: #372579;
   outline: none;
 }
@@ -182,38 +184,206 @@
   background: #f5f5f5;
 }
 
-@media (max-width: 768px) {
+/* Кнопка "Войти" (submit) */
+.login-submit-btn {
+  display: block;
+  width: 144px;
+  height: 49px;
+  margin: 30px auto 0;
+  background: #372579;
+  border: none;
+  border-radius: 60px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 30px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.login-submit-btn:hover {
+  background: #4a2f99;
+}
+
+/* Ссылка "Зарегистрироваться" */
+.login-register-link {
+  margin-top: 30px;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 22px;
+  color: #372579;
+}
+
+.login-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 22px;
+  color: #372579;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.login-link-btn:hover {
+  color: #4a2f99;
+}
+
+/* Планшеты */
+@media (max-width: 1024px) {
   .login-header {
-    padding: 40px 20px 20px;
+    padding: 50px 50px 30px;
   }
 
   .login-logo-text {
-    font-size: 30px;
-    line-height: 36px;
+    font-size: 32px;
+  }
+}
+
+/* Мобильные */
+@media (max-width: 768px) {
+  .login-header {
+    padding: 30px 20px 20px;
+  }
+
+  .login-logo-text {
+    font-size: 28px;
+    line-height: 34px;
+  }
+
+  .login-logo-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .login-content {
+    padding: 0 15px;
   }
 
   .login-form {
     padding: 30px 20px;
+    border-width: 3px;
   }
 
   .login-title {
     font-size: 24px;
     line-height: 30px;
+    margin-bottom: 30px;
   }
 
   .login-input {
+    font-size: 18px;
+    height: 48px;
+  }
+
+  .login-btn {
+    font-size: 22px;
+    height: 48px;
+    width: 130px;
+  }
+
+  .login-register-btn {
+    font-size: 20px;
+    height: 48px;
+    width: 100%;
+    max-width: 277px;
+  }
+
+  .login-submit-btn {
+    font-size: 22px;
+    height: 48px;
+    width: 130px;
+  }
+
+  .login-register-link {
+    font-size: 16px;
+  }
+
+  .login-link-btn {
+    font-size: 16px;
+  }
+
+  /* Уменьшаем размытые круги */
+  .login-circle-1 {
+    width: 250px;
+    height: 250px;
+    filter: blur(120px);
+  }
+
+  .login-circle-2 {
+    width: 400px;
+    height: 400px;
+    filter: blur(200px);
+  }
+
+  .login-circle-3 {
+    width: 150px;
+    height: 150px;
+    filter: blur(80px);
+  }
+}
+
+/* Маленькие мобильные */
+@media (max-width: 480px) {
+  .login-header {
+    padding: 20px 15px 15px;
+  }
+
+  .login-logo-text {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .login-logo-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .login-content {
+    padding: 0 10px;
+  }
+
+  .login-form {
+    padding: 25px 15px;
+  }
+
+  .login-title {
+    font-size: 22px;
+    margin-bottom: 25px;
+  }
+
+  .login-input {
+    font-size: 16px;
+    height: 44px;
+    padding: 0 16px;
+  }
+
+  .login-btn {
     font-size: 20px;
     height: 44px;
   }
 
-  .login-btn,
   .login-register-btn {
-    font-size: 20px;
+    font-size: 18px;
+    height: 44px;
   }
 
-  .login-register-btn {
-    width: 100%;
-    max-width: 277px;
+  .login-submit-btn {
+    font-size: 20px;
+    height: 44px;
+  }
+
+  .login-register-link {
+    font-size: 14px;
+  }
+
+  .login-link-btn {
+    font-size: 14px;
   }
 }
-

@@ -5,16 +5,18 @@
 .play-page {
   position: relative;
   width: 100%;
-  height: 100vh; /* Фиксированная высота во весь экран */
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height для мобильных */
   background: #FFFFFF;
   font-family: 'Montserrat', sans-serif;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Скрываем скролл страницы */
+  overflow: hidden;
 }
 
 /* Шапка */
 .play-header {
+  position: relative;
   width: 100%;
   height: 89px;
   background: #372579;
@@ -23,7 +25,8 @@
   justify-content: space-between;
   padding: 0 50px;
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 100;
+  box-sizing: border-box;
 }
 
 .play-logo {
@@ -31,6 +34,7 @@
   flex-direction: row;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
 }
 
 .play-logo-icon {
@@ -61,11 +65,18 @@
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
+  flex-shrink: 0;
 }
 
 .play-profile-btn:hover,
 .play-header .profile-menu-btn:hover {
   background: #4a2f99;
+}
+
+/* Белая иконка профиля в тёмном хедере */
+.play-header .profile-menu-btn svg circle,
+.play-header .profile-menu-btn svg path {
+  stroke: #FFFFFF;
 }
 
 /* Индикатор раунда */
@@ -77,7 +88,7 @@
   font-size: 25px;
   line-height: 30px;
   color: #372579;
-  padding: 20px 0 10px;
+  padding: 15px 0 10px;
   flex-shrink: 0;
   background: #FFFFFF;
 }
@@ -90,21 +101,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 50px 20px;
+  padding: 10px 20px 20px;
   box-sizing: border-box;
   overflow: hidden;
+  min-height: 0;
 }
 
 .play-photo-wrapper {
   position: relative;
   width: 100%;
   max-width: 1240px;
-  /* Высота адаптируется под доступное место минус кнопка */
-  height: calc(100% - 80px); 
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  min-height: 0;
 }
 
 .play-photo-big {
@@ -112,13 +124,14 @@
   width: 100%;
   height: 100%;
   position: relative;
-  border: 1px solid #372579;
+  border: 2px solid #372579;
   border-radius: 10px;
   overflow-x: auto;
   overflow-y: hidden;
   cursor: grab;
   user-select: none;
-  background: #f5f5f5; /* Чтобы было видно контейнер если фото грузится */
+  background: #f5f5f5;
+  -webkit-overflow-scrolling: touch;
 }
 
 .play-photo-big:active {
@@ -127,45 +140,60 @@
 
 .play-photo-big::-webkit-scrollbar {
   height: 0;
+  display: none;
 }
 
 .play-photo-big .play-photo {
   height: 100%;
   width: auto;
-  max-width: none; /* Важно для панорамы */
+  max-width: none;
   display: block;
 }
 
+/* Стрелки навигации по фото */
 .play-content-photo .play-arrow {
   position: absolute;
-  width: 60px;
-  height: 60px;
-  background: transparent;
-  border: none;
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #372579;
+  border-radius: 50%;
   cursor: pointer;
   z-index: 20;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.play-content-photo .play-arrow:hover {
+  background: #372579;
+}
+
+.play-content-photo .play-arrow:hover svg path {
+  stroke: #FFFFFF;
 }
 
 .play-content-photo .play-arrow-left {
-  left: -70px;
+  left: 15px;
 }
 
 .play-content-photo .play-arrow-right {
-  right: -70px;
+  right: 15px;
 }
 
 .play-ready-btn {
-  width: 148px;
-  height: 49px;
+  width: 180px;
+  height: 50px;
   background: #372579;
   border: none;
   border-radius: 60px;
   font-family: 'Montserrat', sans-serif;
   font-weight: 500;
-  font-size: 25px;
-  line-height: 30px;
+  font-size: 22px;
+  line-height: 28px;
   color: #FFFFFF;
   cursor: pointer;
   transition: background 0.2s;
@@ -182,18 +210,19 @@
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 10px 50px 20px;
+  padding: 10px 20px 20px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .play-question {
   font-family: 'Montserrat', sans-serif;
   font-weight: 600;
-  font-size: 32px;
-  line-height: 39px;
+  font-size: 28px;
+  line-height: 34px;
   color: #372579;
   text-align: center;
   margin: 0 0 10px;
@@ -203,29 +232,29 @@
 .play-map-layout {
   position: relative;
   width: 100%;
-  flex: 1; /* Занимаем всё доступное место */
+  flex: 1;
   display: flex;
-  gap: 30px;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  min-height: 0; /* Важно для flex-контейнера */
+  gap: 20px;
+  align-items: stretch;
+  margin-bottom: 15px;
+  min-height: 0;
 }
 
 /* Секция с картой */
 .play-map-section {
   flex: 1;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-width: 0; /* Важно для сжатия */
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
 }
 
 .play-map-title {
   font-family: 'Montserrat', sans-serif;
   font-weight: 500;
-  font-size: 25px;
-  line-height: 30px;
+  font-size: 20px;
+  line-height: 24px;
   color: #372579;
   margin: 0;
   text-align: center;
@@ -235,12 +264,13 @@
 .play-map-container {
   box-sizing: border-box;
   width: 100%;
-  height: 100%; /* На всю высоту родителя */
+  flex: 1;
   position: relative;
-  background: #FFFFFF;
+  background: #f9f8f4;
   border: 2px solid #372579;
   border-radius: 10px;
   overflow: hidden;
+  min-height: 200px;
 }
 
 .play-map-inner {
@@ -248,11 +278,16 @@
   width: 100%;
   height: 100%;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .play-map-wrapper {
-  min-width: 100%;
-  min-height: 100%;
+  position: relative;
+  flex-shrink: 0;
+  /* Размеры задаются inline через JS */
 }
 
 .play-map {
@@ -271,24 +306,24 @@
   justify-content: center;
   font-family: 'Montserrat', sans-serif;
   font-weight: 500;
-  font-size: 25px;
+  font-size: 20px;
   color: #372579;
 }
 
 /* Zoom controls */
 .play-zoom-controls {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
+  bottom: 15px;
+  right: 15px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   z-index: 10;
 }
 
 .play-zoom-btn {
   box-sizing: border-box;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   background: #FFFFFF;
   border: 2px solid #372579;
   border-radius: 50%;
@@ -297,6 +332,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  touch-action: manipulation;
 }
 
 .play-zoom-btn:hover:not(:disabled) {
@@ -326,7 +362,7 @@
 }
 
 .play-zoom-reset .play-zoom-icon {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 /* Pin */
@@ -348,19 +384,19 @@
 
 /* Правая колонка (превью + выбор этажа) */
 .play-sidebar {
-  width: 250px;
+  width: 220px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
   flex-shrink: 0;
 }
 
 /* Превью фото */
 .play-photo-preview {
   width: 100%;
-  height: 150px; /* Фиксированная высота для превью */
+  height: 130px;
   position: relative;
-  border: 1px solid #372579;
+  border: 2px solid #372579;
   border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
@@ -375,13 +411,13 @@
 
 .play-fullscreen-btn {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 30px;
-  height: 30px;
-  background: #FFFFFF;
+  right: 8px;
+  bottom: 8px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.95);
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -398,24 +434,27 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  overflow-y: auto; /* Если много этажей */
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .play-floor-title {
   font-family: 'Montserrat', sans-serif;
   font-weight: 500;
-  font-size: 25px;
-  line-height: 30px;
+  font-size: 20px;
+  line-height: 24px;
   color: #372579;
   margin: 0 0 5px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .play-floor-option {
   box-sizing: border-box;
   width: 100%;
-  height: 49px;
+  height: 44px;
   background: #FFFFFF;
   border: 2px solid #372579;
   border-radius: 10px;
@@ -430,7 +469,7 @@
 
 .play-floor-option:has(.play-floor-radio:checked) {
   background: #372579;
-  border-width: 4px;
+  border-width: 3px;
 }
 
 .play-floor-option:has(.play-floor-radio:checked) .play-floor-label {
@@ -446,8 +485,8 @@
 .play-floor-label {
   font-family: 'Montserrat', sans-serif;
   font-weight: 500;
-  font-size: 25px;
-  line-height: 30px;
+  font-size: 20px;
+  line-height: 24px;
   color: #372579;
   cursor: pointer;
   user-select: none;
@@ -456,15 +495,15 @@
 /* Кнопка ответа */
 .play-submit-btn {
   align-self: center;
-  width: 148px;
-  height: 49px;
+  width: 180px;
+  height: 50px;
   background: #372579;
   border: none;
   border-radius: 60px;
   font-family: 'Montserrat', sans-serif;
   font-weight: 500;
-  font-size: 25px;
-  line-height: 30px;
+  font-size: 22px;
+  line-height: 28px;
   color: #FFFFFF;
   cursor: pointer;
   transition: all 0.2s;
@@ -480,38 +519,372 @@
   cursor: not-allowed;
 }
 
-/* Адаптив для маленьких экранов */
+/* ========================================
+   АДАПТИВ ДЛЯ ПЛАНШЕТОВ (max-width: 1024px)
+   ======================================== */
+@media (max-width: 1024px) {
+  .play-header {
+    padding: 0 30px;
+  }
+
+  .play-logo-text {
+    font-size: 32px;
+  }
+
+  .play-sidebar {
+    width: 180px;
+  }
+
+  .play-photo-preview {
+    height: 110px;
+  }
+}
+
+/* ========================================
+   АДАПТИВ ДЛЯ МАЛЕНЬКИХ НОУТБУКОВ (max-height: 800px)
+   ======================================== */
 @media (max-height: 800px) {
   .play-header {
     height: 60px;
   }
+
   .play-logo-text {
     font-size: 24px;
   }
+
   .play-logo-icon {
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
   }
+
+  .play-profile-btn,
+  .play-header .profile-menu-btn {
+    width: 40px;
+    height: 40px;
+  }
+
   .play-round-indicator {
     font-size: 20px;
-    padding: 10px 0 5px;
+    padding: 10px 0 8px;
   }
+
   .play-question {
-    font-size: 24px;
-    margin-bottom: 5px;
+    font-size: 22px;
+    margin-bottom: 8px;
   }
-  .play-map-title, .play-floor-title {
-    font-size: 20px;
+
+  .play-map-title,
+  .play-floor-title {
+    font-size: 18px;
   }
+
   .play-floor-option {
-    height: 40px;
+    height: 38px;
   }
+
   .play-floor-label {
+    font-size: 18px;
+  }
+
+  .play-submit-btn,
+  .play-ready-btn {
+    height: 44px;
     font-size: 20px;
   }
-  .play-submit-btn, .play-ready-btn {
+
+  .play-sidebar {
+    width: 160px;
+    gap: 10px;
+  }
+
+  .play-photo-preview {
+    height: 90px;
+  }
+}
+
+/* ========================================
+   МОБИЛЬНАЯ ВЕРСТКА (max-width: 768px)
+   ======================================== */
+@media (max-width: 768px) {
+  /* Шапка */
+  .play-header {
+    padding: 0 15px;
+    height: 60px;
+  }
+
+  .play-logo-text {
+    display: none;
+  }
+
+  .play-logo-icon {
+    width: 40px;
     height: 40px;
+  }
+
+  .play-profile-btn,
+  .play-header .profile-menu-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Раунд */
+  .play-round-indicator {
+    padding: 12px 0 8px;
+    font-size: 18px;
+  }
+
+  /* Контент */
+  .play-content-photo,
+  .play-content-map {
+    padding: 10px 15px 15px;
+  }
+
+  /* Фото */
+  .play-photo-wrapper {
+    margin-bottom: 12px;
+  }
+
+  .play-content-photo .play-arrow {
+    width: 44px;
+    height: 44px;
+  }
+
+  .play-content-photo .play-arrow-left {
+    left: 10px;
+  }
+
+  .play-content-photo .play-arrow-right {
+    right: 10px;
+  }
+
+  .play-ready-btn {
+    width: 160px;
+    height: 48px;
     font-size: 20px;
-    line-height: 24px;
+  }
+
+  /* Карта - вертикальный layout */
+  .play-question {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .play-map-layout {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .play-map-section {
+    flex: 1;
+    min-height: 200px;
+  }
+
+  .play-map-title {
+    display: none;
+  }
+
+  .play-sidebar {
+    width: 100%;
+    flex-direction: row;
+    gap: 10px;
+    flex-shrink: 0;
+    align-items: stretch;
+  }
+
+  /* Превью фото на мобильных */
+  .play-photo-preview {
+    width: 100px;
+    height: 80px;
+    flex-shrink: 0;
+  }
+
+  .play-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    right: 5px;
+    bottom: 5px;
+  }
+
+  /* Выбор этажа - горизонтальный */
+  .play-floor-selection {
+    flex: 1;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 8px;
+    align-items: center;
+    padding-bottom: 0;
+  }
+
+  .play-floor-title {
+    display: none;
+  }
+
+  .play-floor-option {
+    min-width: 50px;
+    width: auto;
+    height: 44px;
+    padding: 0 15px;
+    flex: 0 0 auto;
+  }
+
+  .play-floor-label {
+    font-size: 18px;
+  }
+
+  /* Кнопка */
+  .play-submit-btn {
+    width: 100%;
+    max-width: 200px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  /* Zoom кнопки */
+  .play-zoom-controls {
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .play-zoom-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ========================================
+   МАЛЕНЬКИЕ МОБИЛЬНЫЕ (max-width: 480px)
+   ======================================== */
+@media (max-width: 480px) {
+  .play-header {
+    padding: 0 10px;
+    height: 55px;
+  }
+
+  .play-logo-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .play-profile-btn,
+  .play-header .profile-menu-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .play-round-indicator {
+    font-size: 16px;
+    padding: 10px 0 6px;
+  }
+
+  .play-content-photo,
+  .play-content-map {
+    padding: 8px 10px 12px;
+  }
+
+  .play-question {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  .play-content-photo .play-arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .play-content-photo .play-arrow-left {
+    left: 8px;
+  }
+
+  .play-content-photo .play-arrow-right {
+    right: 8px;
+  }
+
+  .play-ready-btn,
+  .play-submit-btn {
+    width: 140px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .play-photo-preview {
+    width: 80px;
+    height: 65px;
+  }
+
+  .play-floor-option {
+    min-width: 44px;
+    height: 40px;
+    padding: 0 12px;
+  }
+
+  .play-floor-label {
+    font-size: 16px;
+  }
+}
+
+/* ========================================
+   ЛАНДШАФТНАЯ ОРИЕНТАЦИЯ МОБИЛЬНЫХ
+   ======================================== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .play-header {
+    height: 50px;
+  }
+
+  .play-logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .play-profile-btn,
+  .play-header .profile-menu-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .play-round-indicator {
+    font-size: 16px;
+    padding: 8px 0 5px;
+  }
+
+  .play-content-photo,
+  .play-content-map {
+    padding: 5px 15px 10px;
+  }
+
+  .play-photo-wrapper {
+    margin-bottom: 8px;
+  }
+
+  .play-ready-btn,
+  .play-submit-btn {
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .play-map-layout {
+    flex-direction: row;
+    gap: 15px;
+  }
+
+  .play-sidebar {
+    width: 150px;
+    flex-direction: column;
+  }
+
+  .play-floor-selection {
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .play-floor-option {
+    width: 100%;
+    height: 36px;
+  }
+
+  .play-photo-preview {
+    width: 100%;
+    height: 70px;
   }
 }

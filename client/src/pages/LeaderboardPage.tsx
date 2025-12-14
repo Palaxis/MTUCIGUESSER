@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
 import './LeaderboardPage.css'
+import ProfileMenu from '../components/ProfileMenu'
+import { leaderboardApi, LeaderboardPlayer } from '../shared/api'
 
-interface Player {
-  rank: number
-  name: string
-  score: number
+interface Player extends LeaderboardPlayer {
   isCurrentUser?: boolean
 }
 
@@ -16,9 +14,11 @@ interface LeaderboardPageProps {
   isNewRecord?: boolean
   previousBest?: number
   onPlayAgain: () => void
+  onNavigateToAccount?: () => void
+  onLogout?: () => void
 }
 
-export default function LeaderboardPage({ user, userScore, userRank, isNewRecord, previousBest, onPlayAgain }: LeaderboardPageProps) {
+export default function LeaderboardPage({ user, userScore, userRank, isNewRecord, previousBest, onPlayAgain, onNavigateToAccount, onLogout }: LeaderboardPageProps) {
   const [players, setPlayers] = useState<Player[]>([])
   const [hypotheticalRank, setHypotheticalRank] = useState<number | null>(null)
 
@@ -28,8 +28,7 @@ export default function LeaderboardPage({ user, userScore, userRank, isNewRecord
 
   async function loadLeaderboard() {
     try {
-      const response = await axios.get('/api/leaderboard')
-      let leaderboardData = response.data
+      let leaderboardData = await leaderboardApi.getLeaderboard()
       
       // Если есть счёт игрока (авторизованный или гость)
       if (userScore !== undefined) {
@@ -72,12 +71,19 @@ export default function LeaderboardPage({ user, userScore, userRank, isNewRecord
           <img src="/mtuci-logo-white.svg" alt="MTUCI" className="leaderboard-logo-icon" />
           <h1 className="leaderboard-logo-text">MTUCI Guesser</h1>
         </div>
-        <button className="leaderboard-profile-btn">
-          <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
-            <circle cx="12.5" cy="8" r="4" stroke="white" strokeWidth="2"/>
-            <path d="M5 20C5 16 8 13 12.5 13C17 13 20 16 20 20" stroke="white" strokeWidth="2"/>
-          </svg>
-        </button>
+        {user && onNavigateToAccount && onLogout ? (
+          <ProfileMenu 
+            onNavigateToAccount={onNavigateToAccount}
+            onLogout={onLogout}
+          />
+        ) : (
+          <button className="leaderboard-profile-btn">
+            <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+              <circle cx="12.5" cy="8" r="4" stroke="white" strokeWidth="2"/>
+              <path d="M5 20C5 16 8 13 12.5 13C17 13 20 16 20 20" stroke="white" strokeWidth="2"/>
+            </svg>
+          </button>
+        )}
       </header>
 
       <div className="leaderboard-content">

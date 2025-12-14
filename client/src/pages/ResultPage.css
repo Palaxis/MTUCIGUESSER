@@ -4,6 +4,7 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background: #FFFFFF;
   font-family: 'Montserrat', sans-serif;
 }
@@ -16,7 +17,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 100px;
+  padding: 0 80px;
+  box-sizing: border-box;
+  z-index: 100;
 }
 
 .result-logo {
@@ -24,6 +27,7 @@
   flex-direction: row;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
 }
 
 .result-logo-icon {
@@ -53,10 +57,36 @@
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
+  flex-shrink: 0;
 }
 
 .result-profile-btn:hover {
   background: #4a2f99;
+}
+
+/* Стили ProfileMenu для тёмного хедера */
+.result-header .profile-menu-btn {
+  box-sizing: border-box;
+  width: 49px;
+  height: 49px;
+  background: #372579;
+  border: 2px solid #FFFFFF;
+  border-radius: 37.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.result-header .profile-menu-btn:hover {
+  background: #4a2f99;
+}
+
+.result-header .profile-menu-btn svg circle,
+.result-header .profile-menu-btn svg path {
+  stroke: #FFFFFF;
 }
 
 .result-content {
@@ -64,7 +94,9 @@
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 89px);
-  padding: 40px 20px;
+  min-height: calc(100dvh - 89px);
+  padding: 30px 20px;
+  box-sizing: border-box;
 }
 
 .result-card {
@@ -76,7 +108,7 @@
 .result-map-container {
   box-sizing: border-box;
   position: relative;
-  max-width: 800px;
+  max-width: 517px;
   width: 100%;
   background: #FFFFFF;
   border: 2px solid #372579;
@@ -152,22 +184,103 @@
   background: #4a2f99;
 }
 
+/* Планшеты */
+@media (max-width: 1024px) {
+  .result-header {
+    padding: 0 40px;
+  }
+
+  .result-logo-text {
+    font-size: 32px;
+  }
+}
+
+/* Мобильные */
 @media (max-width: 768px) {
   .result-header {
     padding: 0 20px;
+    height: 70px;
+  }
+
+  .result-logo-text {
+    display: none;
+  }
+
+  .result-logo-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .result-profile-btn,
+  .result-header .profile-menu-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .result-content {
+    min-height: calc(100vh - 70px);
+    min-height: calc(100dvh - 70px);
+    padding: 20px 15px;
   }
 
   .result-title {
     font-size: 30px;
     line-height: 36px;
+    margin: 15px 0 8px;
   }
 
   .result-score-text {
     font-size: 20px;
+    margin: 8px 0 15px;
   }
 
   .result-next-btn {
     font-size: 20px;
+    height: 48px;
+  }
+
+  .result-pin {
+    width: 14px;
+    height: 14px;
   }
 }
 
+/* Маленькие мобильные */
+@media (max-width: 480px) {
+  .result-header {
+    padding: 0 15px;
+    height: 60px;
+  }
+
+  .result-logo-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .result-content {
+    min-height: calc(100vh - 60px);
+    min-height: calc(100dvh - 60px);
+    padding: 15px 10px;
+  }
+
+  .result-title {
+    font-size: 26px;
+    line-height: 32px;
+    margin: 12px 0 6px;
+  }
+
+  .result-score-text {
+    font-size: 18px;
+    margin: 6px 0 12px;
+  }
+
+  .result-next-btn {
+    font-size: 18px;
+    height: 44px;
+  }
+
+  .result-pin {
+    width: 12px;
+    height: 12px;
+  }
+}

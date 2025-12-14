@@ -4,9 +4,10 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background: #FFFFFF;
   font-family: 'Montserrat', sans-serif;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .register-background {
@@ -49,7 +50,7 @@
 
 .register-header {
   position: relative;
-  padding: 80px 100px 40px;
+  padding: 60px 80px 40px;
   z-index: 10;
 }
 
@@ -58,6 +59,7 @@
   flex-direction: row;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
 }
 
 .register-logo-icon {
@@ -124,8 +126,8 @@
   margin-bottom: 20px;
   font-family: 'Montserrat', sans-serif;
   font-weight: 200;
-  font-size: 25px;
-  line-height: 30px;
+  font-size: 22px;
+  line-height: 28px;
   color: #372579;
   outline: none;
 }
@@ -184,32 +186,125 @@
   opacity: 0.7;
 }
 
-@media (max-width: 768px) {
+/* Планшеты */
+@media (max-width: 1024px) {
   .register-header {
-    padding: 40px 20px 20px;
+    padding: 50px 50px 30px;
   }
 
   .register-logo-text {
-    font-size: 30px;
-    line-height: 36px;
+    font-size: 32px;
+  }
+}
+
+/* Мобильные */
+@media (max-width: 768px) {
+  .register-header {
+    padding: 30px 20px 20px;
+  }
+
+  .register-logo-text {
+    font-size: 28px;
+    line-height: 34px;
+  }
+
+  .register-logo-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .register-content {
+    padding: 0 15px;
   }
 
   .register-form {
     padding: 30px 20px;
+    border-width: 3px;
   }
 
   .register-title {
     font-size: 24px;
     line-height: 30px;
+    margin-bottom: 30px;
   }
 
   .register-input {
-    font-size: 20px;
+    font-size: 18px;
+    height: 48px;
+  }
+
+  .register-btn {
+    font-size: 22px;
+    height: 48px;
+    width: 100%;
+    max-width: 277px;
+  }
+
+  .register-login-btn {
+    font-size: 16px;
+  }
+
+  /* Уменьшаем размытые круги */
+  .register-circle-1 {
+    width: 250px;
+    height: 250px;
+    filter: blur(120px);
+  }
+
+  .register-circle-2 {
+    width: 400px;
+    height: 400px;
+    filter: blur(200px);
+  }
+
+  .register-circle-3 {
+    width: 150px;
+    height: 150px;
+    filter: blur(80px);
+  }
+}
+
+/* Маленькие мобильные */
+@media (max-width: 480px) {
+  .register-header {
+    padding: 20px 15px 15px;
+  }
+
+  .register-logo-text {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .register-logo-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .register-content {
+    padding: 0 10px;
+  }
+
+  .register-form {
+    padding: 25px 15px;
+  }
+
+  .register-title {
+    font-size: 22px;
+    margin-bottom: 25px;
+  }
+
+  .register-input {
+    font-size: 16px;
     height: 44px;
+    padding: 0 16px;
   }
 
   .register-btn {
     font-size: 20px;
+    height: 44px;
+  }
+
+  .register-login-btn {
+    font-size: 14px;
   }
 }
-

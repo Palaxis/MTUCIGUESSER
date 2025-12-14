@@ -1,27 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react'
-import axios from 'axios'
+import React, { useRef, useState } from 'react'
 import './Play.css'
 import ResultPage from './ResultPage'
 import ProfileMenu from '../components/ProfileMenu'
-
-type Floor = {
-  id: number
-  name: string | null
-  building: string | null
-  level: string | null
-  image_path: string
-  width_px: number
-  height_px: number
-}
-
-type LocationForGame = {
-  id: number
-  floor_id: number
-  image_path: string
-  hint: string | null
-  correct_x: number
-  correct_y: number
-}
+import { useGame } from '../features/game/hooks'
+import { gameApi } from '../shared/api'
 
 interface PlayProps {
   onGameComplete: (score: number, rank?: number, isNewRecord?: boolean, previousBest?: number) => void
@@ -31,93 +13,48 @@ interface PlayProps {
 }
 
 export default function Play({ onGameComplete, user, onNavigateToAccount, onLogout }: PlayProps) {
-  const [floors, setFloors] = useState<Floor[]>([])
-  const [locations, setLocations] = useState<LocationForGame[]>([])
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedFloor, setSelectedFloor] = useState<number | null>(null)
-  const [guess, setGuess] = useState<{x:number, y:number} | null>(null)
-  const [result, setResult] = useState<any>(null)
-  const [showResult, setShowResult] = useState(false)
-  const [round, setRound] = useState(1)
-  const [totalRounds] = useState(5)
-  const [totalScore, setTotalScore] = useState(0)
-  const [mapZoom, setMapZoom] = useState(1)
-  const [minZoom, setMinZoom] = useState(0.5)
-  const [viewMode, setViewMode] = useState<'photo' | 'map'>('photo')
+  const game = useGame()
+  const {
+    floors,
+    locations,
+    currentIndex,
+    selectedFloor,
+    guess,
+    result,
+    showResult,
+    round,
+    totalRounds,
+    totalScore,
+    mapZoom,
+    minZoom,
+    viewMode,
+    mapContainerRef,
+    setSelectedFloor,
+    setGuess,
+    setMapZoom,
+    setViewMode,
+    nextLocation: gameNextLocation,
+    submitGuess: gameSubmitGuess
+  } = game
+
   const mapRef = useRef<HTMLImageElement | null>(null)
   const photoRef = useRef<HTMLDivElement | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [scrollLeft, setScrollLeft] = useState(0)
 
-  useEffect(() => {
-    axios.get('/api/floors').then(r => setFloors(r.data))
-    loadLocations()
-  }, [])
-
-  // Автоматически подстраиваем зум когда выбран этаж
-  useEffect(() => {
-    if (selectedFloor && floors.length > 0) {
-      const currentFloor = floors.find(f => f.id === selectedFloor)
-      if (currentFloor) {
-        // Размер контейнера карты (517x276)
-        const containerWidth = 517
-        const containerHeight = 276
-        
-        // Рассчитываем минимальный зум чтобы карта поместилась
-        const scaleX = containerWidth / currentFloor.width_px
-        const scaleY = containerHeight / currentFloor.height_px
-        const calculatedMinZoom = Math.min(scaleX, scaleY, 1) // не больше 1
-        
-        setMinZoom(calculatedMinZoom)
-        setMapZoom(calculatedMinZoom) // устанавливаем начальный зум
-      }
-    }
-  }, [selectedFloor, floors])
-
-  async function loadLocations() {
-    try {
-      const response = await axios.get('/api/locations/random')
-      console.log('Location response:', response.data)
-      // API возвращает объект с location и floor
-      if (response.data.location) {
-        setLocations([response.data.location])
-        setCurrentIndex(0)
-      } else {
-        console.error('No location in response')
-      }
-    } catch (error) {
-      console.error('Failed to load location:', error)
-    }
-  }
-
-  function nextLocation() {
-    setShowResult(false)
-    setGuess(null)
-    setResult(null)
-    setSelectedFloor(null)
-    setMapZoom(1)
-    setViewMode('photo')
-
-    if (round >= totalRounds) {
-      // Игра завершена
-      completeGame()
-    } else {
-      setRound(round + 1)
-      loadLocations()
+  async function nextLocation() {
+    const isComplete = gameNextLocation()
+    if (isComplete) {
+      await completeGame()
     }
   }
 
   async function completeGame() {
-    // Сохраняем результат если пользователь авторизован
     if (user) {
       try {
-        const response = await axios.post('/api/game-results', {
-          user_id: user.id,
-          total_score: totalScore,
-          rounds_played: totalRounds
-        })
-        onGameComplete(totalScore, response.data.rank, response.data.isNewRecord, response.data.previousBest)
+        const response = await gameApi.saveGameResult(user.id, totalScore, totalRounds)
+        onGameComplete(totalScore, response.rank, response.isNewRecord, response.previousBest)
       } catch (error) {
         console.error('Failed to save game result:', error)
         onGameComplete(totalScore)
@@ -125,6 +62,10 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
     } else {
       onGameComplete(totalScore)
     }
+  }
+
+  async function submitGuess() {
+    await gameSubmitGuess()
   }
 
   function scrollPhotoLeft() {
@@ -181,24 +122,6 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
     setGuess({ x, y })
   }
 
-  async function submitGuess() {
-    if (!locations[currentIndex] || !guess || !selectedFloor) return
-    
-    try {
-      const response = await axios.post('/api/guess', {
-        location_id: locations[currentIndex].id,
-        guess_x: guess.x,
-        guess_y: guess.y,
-        selected_floor: selectedFloor
-      })
-      
-      setResult(response.data)
-      setTotalScore(totalScore + response.data.score)
-      setShowResult(true)
-    } catch (error) {
-      console.error('Failed to submit guess:', error)
-    }
-  }
 
   const currentLocation = locations[currentIndex]
   const currentFloor = selectedFloor ? floors.find(f => f.id === selectedFloor) : null
@@ -216,6 +139,9 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
         floorWidth={currentFloor.width_px}
         floorHeight={currentFloor.height_px}
         onNext={nextLocation}
+        user={user}
+        onNavigateToAccount={onNavigateToAccount}
+        onLogout={onLogout}
       />
     )
   }
@@ -250,8 +176,8 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
         <div className="play-content play-content-photo">
           <div className="play-photo-wrapper">
             <button className="play-arrow play-arrow-left" onClick={scrollPhotoLeft}>
-              <svg width="80" height="80" viewBox="0 0 80 80">
-                <path d="M50 20L25 40L50 60" stroke="#372579" strokeWidth="3" fill="none"/>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M15 6L9 12L15 18" stroke="#372579" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
             
@@ -273,8 +199,8 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
             </div>
 
             <button className="play-arrow play-arrow-right" onClick={scrollPhotoRight}>
-              <svg width="80" height="80" viewBox="0 0 80 80">
-                <path d="M30 20L55 40L30 60" stroke="#372579" strokeWidth="3" fill="none"/>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M9 6L15 12L9 18" stroke="#372579" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           </div>
@@ -294,7 +220,7 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
             <div className="play-map-section">
               <h3 className="play-map-title">Найди точку на карте</h3>
               
-              <div className="play-map-container">
+              <div className="play-map-container" ref={mapContainerRef}>
                 {currentFloor ? (
                   <div className="play-map-inner">
                     <div className="play-map-wrapper" style={{ 

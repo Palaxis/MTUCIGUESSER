@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import axios from 'axios'
 import './LoginPage.css'
 
 interface LoginPageProps {
-  onLogin: (user: any) => void
+  onLogin: (email: string, password: string) => Promise<void>
   onNavigateToRegister: () => void
 }
 
@@ -17,8 +16,7 @@ export default function LoginPage({ onLogin, onNavigateToRegister }: LoginPagePr
     setError('')
 
     try {
-      const response = await axios.post('/api/auth/login', { email, password })
-      onLogin(response.data.user)
+      await onLogin(email, password)
     } catch (err: any) {
       setError(err.response?.data?.error || 'Ошибка входа')
     }

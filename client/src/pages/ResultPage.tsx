@@ -1,5 +1,6 @@
 import React from 'react'
 import './ResultPage.css'
+import ProfileMenu from '../components/ProfileMenu'
 
 interface ResultPageProps {
   score: number
@@ -12,6 +13,9 @@ interface ResultPageProps {
   floorWidth: number
   floorHeight: number
   onNext: () => void
+  user?: any
+  onNavigateToAccount?: () => void
+  onLogout?: () => void
 }
 
 export default function ResultPage({
@@ -24,7 +28,10 @@ export default function ResultPage({
   guessY,
   floorWidth,
   floorHeight,
-  onNext
+  onNext,
+  user,
+  onNavigateToAccount,
+  onLogout
 }: ResultPageProps) {
   return (
     <div className="result-page">
@@ -33,12 +40,19 @@ export default function ResultPage({
           <img src="/mtuci-logo-white.svg" alt="MTUCI" className="result-logo-icon" />
           <h1 className="result-logo-text">MTUCI Guesser</h1>
         </div>
-        <button className="result-profile-btn">
-          <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
-            <circle cx="12.5" cy="8" r="4" stroke="white" strokeWidth="2"/>
-            <path d="M5 20C5 16 8 13 12.5 13C17 13 20 16 20 20" stroke="white" strokeWidth="2"/>
-          </svg>
-        </button>
+        {user && onNavigateToAccount && onLogout ? (
+          <ProfileMenu 
+            onNavigateToAccount={onNavigateToAccount}
+            onLogout={onLogout}
+          />
+        ) : (
+          <button className="result-profile-btn">
+            <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+              <circle cx="12.5" cy="8" r="4" stroke="white" strokeWidth="2"/>
+              <path d="M5 20C5 16 8 13 12.5 13C17 13 20 16 20 20" stroke="white" strokeWidth="2"/>
+            </svg>
+          </button>
+        )}
       </header>
 
       <div className="result-content">
