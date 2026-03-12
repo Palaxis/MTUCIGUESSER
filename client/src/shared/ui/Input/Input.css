@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;500&display=swap');
+
+.ui-input-wrapper {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.ui-input-label {
+  display: block;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  color: #372579;
+  margin-bottom: 8px;
+}
+
+.ui-input {
+  box-sizing: border-box;
+  height: 49px;
+  background: #FFFFFF;
+  border: 2px solid #372579;
+  border-radius: 60px;
+  padding: 0 20px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 200;
+  font-size: 25px;
+  line-height: 30px;
+  color: #372579;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ui-input::placeholder {
+  color: #372579;
+  opacity: 0.7;
+}
+
+.ui-input:focus {
+  border-color: #4a2f99;
+}
+
+.ui-input--error {
+  border-color: #F33F3F;
+}
+
+.ui-input--full-width {
+  width: 100%;
+}
+
+.ui-input-error {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  color: #F33F3F;
+  margin-top: 8px;
+  padding-left: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ui-input-label {
+    font-size: 16px;
+  }
+
+  .ui-input {
+    font-size: 18px;
+    height: 48px;
+  }
+
+  .ui-input-error {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ui-input-label {
+    font-size: 14px;
+  }
+
+  .ui-input {
+    font-size: 16px;
+    height: 44px;
+    padding: 0 16px;
+  }
+}
+

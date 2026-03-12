@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Button, Input, Logo, Card } from '../shared/ui'
 import './LoginPage.css'
 
 interface LoginPageProps {
@@ -10,15 +11,19 @@ export default function LoginPage({ onLogin, onNavigateToRegister }: LoginPagePr
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
     try {
       await onLogin(email, password)
     } catch (err: any) {
       setError(err.response?.data?.error || 'Ошибка входа')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -31,57 +36,49 @@ export default function LoginPage({ onLogin, onNavigateToRegister }: LoginPagePr
       </div>
 
       <div className="login-header">
-        <div className="login-logo">
-          <img src="/mtuci-logo-darkblue.svg" alt="MTUCI" className="login-logo-icon" />
-          <h1 className="login-logo-text">MTUCI Guesser</h1>
-        </div>
+        <Logo variant="dark" size="medium" />
       </div>
 
       <div className="login-content">
-        <form className="login-form" onSubmit={handleLogin}>
-          <h2 className="login-title">Вход</h2>
-          
-          {error && <div className="login-error">{error}</div>}
+        <Card title="Вход">
+          <form onSubmit={handleLogin}>
+            {error && <div className="login-error">{error}</div>}
 
-          <div className="login-field">
-            <label className="login-label">Почта</label>
-            <input
+            <Input
               type="text"
-              className="login-input"
+              label="Почта"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="example@mtuci.ru"
               required
             />
-          </div>
 
-          <div className="login-field">
-            <label className="login-label">Пароль</label>
-            <input
+            <Input
               type="password"
-              className="login-input"
+              label="Пароль"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
             />
-          </div>
 
-          <button type="submit" className="login-submit-btn">
-            Войти
-          </button>
+            <Button type="submit" variant="primary" size="medium" disabled={loading} style={{ margin: '30px auto 0', display: 'block' }}>
+              {loading ? 'Вход...' : 'Войти'}
+            </Button>
+          </form>
+        </Card>
 
-          <div className="login-register-link">
-            Нет аккаунта?{' '}
-            <button 
-              type="button" 
-              className="login-link-btn" 
-              onClick={onNavigateToRegister}
-            >
-              Зарегистрироваться
-            </button>
-          </div>
-        </form>
+        <div className="login-register-link">
+          <span>Нет аккаунта?</span>
+          <Button
+            type="button"
+            variant="secondary"
+            size="large"
+            onClick={onNavigateToRegister}
+          >
+            Создать аккаунт
+          </Button>
+        </div>
       </div>
     </div>
   )

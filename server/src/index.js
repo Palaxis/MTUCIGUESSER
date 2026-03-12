@@ -1,18 +1,19 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import imageSize from 'image-size';
 import session from 'express-session';
 import bcrypt from 'bcrypt';
 import db from './db.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { 
+  initializeStorage, 
+  uploadFile, 
+  deleteFile, 
+  getObjectNameFromUrl 
+} from './storage.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,44 +25,17 @@ app.use(cors({
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(session({
-  secret: 'mtuci-guesser-secret-key',
+  secret: process.env.SESSION_SECRET || 'mtuci-guesser-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
 }));
 
-const uploadsRoot = path.join(__dirname, '..', 'uploads');
-const floorUploadsDir = path.join(uploadsRoot, 'floors');
-const locationUploadsDir = path.join(uploadsRoot, 'locations');
-
-for (const dir of [uploadsRoot, floorUploadsDir, locationUploadsDir]) {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
-
-// Static serving of uploaded images
-app.use('/uploads', express.static(uploadsRoot));
-
-// Multer storage for floors and locations
-const storageFloors = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, floorUploadsDir),
-  filename: (req, file, cb) => {
-    const timestamp = Date.now();
-    const ext = path.extname(file.originalname) || '.png';
-    cb(null, `floor_${timestamp}${ext}`);
-  }
+// Use memory storage for multer - files will be uploaded to MinIO
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
-
-const storageLocations = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, locationUploadsDir),
-  filename: (req, file, cb) => {
-    const timestamp = Date.now();
-    const ext = path.extname(file.originalname) || '.png';
-    cb(null, `loc_${timestamp}${ext}`);
-  }
-});
-
-const uploadFloor = multer({ storage: storageFloors });
-const uploadLocation = multer({ storage: storageLocations });
 
 // Health
 app.get('/api/health', (req, res) => {
@@ -90,17 +64,24 @@ app.get('/api/floors/:id', (req, res) => {
   }
 });
 
-app.post('/api/floors', uploadFloor.single('image'), (req, res) => {
+app.post('/api/floors', upload.single('image'), async (req, res) => {
   try {
     const { name, building, level } = req.body;
     if (!req.file) return res.status(400).json({ error: 'Image required' });
-    const fileRelPath = `/uploads/floors/${req.file.filename}`;
-    const fileAbsPath = path.join(floorUploadsDir, req.file.filename);
-    const size = imageSize(fileAbsPath);
+    
+    // Get image dimensions from buffer
+    const size = imageSize(req.file.buffer);
     const width = size.width || 0;
     const height = size.height || 0;
+    
+    // Generate filename and upload to MinIO
+    const timestamp = Date.now();
+    const ext = path.extname(req.file.originalname) || '.png';
+    const objectName = `floors/floor_${timestamp}${ext}`;
+    const imageUrl = await uploadFile(req.file.buffer, objectName, req.file.mimetype);
+    
     const stmt = db.prepare('INSERT INTO floors (name, building, level, image_path, width_px, height_px) VALUES (?, ?, ?, ?, ?, ?)');
-    const info = stmt.run(name || null, building || null, level || null, fileRelPath, width, height);
+    const info = stmt.run(name || null, building || null, level || null, imageUrl, width, height);
     const created = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors WHERE id = ?').get(info.lastInsertRowid);
     res.status(201).json(created);
   } catch (err) {
@@ -127,13 +108,31 @@ app.get('/api/locations', (req, res) => {
 
 app.get('/api/locations/random', (req, res) => {
   try {
-    const { floor_id } = req.query;
-    let row;
-    if (floor_id) {
-      row = db.prepare('SELECT * FROM locations WHERE floor_id = ? ORDER BY RANDOM() LIMIT 1').get(floor_id);
-    } else {
-      row = db.prepare('SELECT * FROM locations ORDER BY RANDOM() LIMIT 1').get();
+    const { floor_id, exclude } = req.query;
+    
+    // Парсим список исключённых ID
+    let excludeIds = [];
+    if (exclude) {
+      excludeIds = exclude.split(',').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
     }
+    
+    let row;
+    if (excludeIds.length > 0) {
+      // Исключаем уже показанные локации
+      const placeholders = excludeIds.map(() => '?').join(',');
+      if (floor_id) {
+        row = db.prepare(`SELECT * FROM locations WHERE floor_id = ? AND id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`).get(floor_id, ...excludeIds);
+      } else {
+        row = db.prepare(`SELECT * FROM locations WHERE id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`).get(...excludeIds);
+      }
+    } else {
+      if (floor_id) {
+        row = db.prepare('SELECT * FROM locations WHERE floor_id = ? ORDER BY RANDOM() LIMIT 1').get(floor_id);
+      } else {
+        row = db.prepare('SELECT * FROM locations ORDER BY RANDOM() LIMIT 1').get();
+      }
+    }
+    
     if (!row) return res.status(404).json({ error: 'No locations available' });
     // Minimal data for game (hide exact coordinates)
     const floor = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors WHERE id = ?').get(row.floor_id);
@@ -147,7 +146,7 @@ app.get('/api/locations/random', (req, res) => {
   }
 });
 
-app.post('/api/locations', uploadLocation.single('image'), (req, res) => {
+app.post('/api/locations', upload.single('image'), async (req, res) => {
   try {
     const { floor_id, name, x, y, hint } = req.body;
     if (!req.file) return res.status(400).json({ error: 'Image required' });
@@ -156,9 +155,15 @@ app.post('/api/locations', uploadLocation.single('image'), (req, res) => {
     const xNum = Math.round(Number(x));
     const yNum = Math.round(Number(y));
     if (!Number.isFinite(xNum) || !Number.isFinite(yNum)) return res.status(400).json({ error: 'Bad coordinates' });
-    const fileRelPath = `/uploads/locations/${req.file.filename}`;
+    
+    // Generate filename and upload to MinIO
+    const timestamp = Date.now();
+    const ext = path.extname(req.file.originalname) || '.png';
+    const objectName = `locations/loc_${timestamp}${ext}`;
+    const imageUrl = await uploadFile(req.file.buffer, objectName, req.file.mimetype);
+    
     const stmt = db.prepare('INSERT INTO locations (floor_id, name, x, y, image_path, hint) VALUES (?, ?, ?, ?, ?, ?)');
-    const info = stmt.run(floor_id, name || null, xNum, yNum, fileRelPath, hint || null);
+    const info = stmt.run(floor_id, name || null, xNum, yNum, imageUrl, hint || null);
     const created = db.prepare('SELECT id, floor_id, name, x, y, image_path, hint FROM locations WHERE id = ?').get(info.lastInsertRowid);
     res.status(201).json(created);
   } catch (err) {
@@ -168,9 +173,25 @@ app.post('/api/locations', uploadLocation.single('image'), (req, res) => {
 });
 
 // Delete floor
-app.delete('/api/floors/:id', (req, res) => {
+app.delete('/api/floors/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Get floor to delete its image from MinIO
+    const floor = db.prepare('SELECT image_path FROM floors WHERE id = ?').get(id);
+    if (floor && floor.image_path) {
+      const objectName = getObjectNameFromUrl(floor.image_path);
+      if (objectName) await deleteFile(objectName);
+    }
+    
+    // Get all locations for this floor to delete their images
+    const locations = db.prepare('SELECT image_path FROM locations WHERE floor_id = ?').all(id);
+    for (const loc of locations) {
+      if (loc.image_path) {
+        const objectName = getObjectNameFromUrl(loc.image_path);
+        if (objectName) await deleteFile(objectName);
+      }
+    }
     
     // Delete all locations associated with this floor
     db.prepare('DELETE FROM locations WHERE floor_id = ?').run(id);
@@ -186,9 +207,17 @@ app.delete('/api/floors/:id', (req, res) => {
 });
 
 // Delete location
-app.delete('/api/locations/:id', (req, res) => {
+app.delete('/api/locations/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Get location to delete its image from MinIO
+    const location = db.prepare('SELECT image_path FROM locations WHERE id = ?').get(id);
+    if (location && location.image_path) {
+      const objectName = getObjectNameFromUrl(location.image_path);
+      if (objectName) await deleteFile(objectName);
+    }
+    
     db.prepare('DELETE FROM locations WHERE id = ?').run(id);
     res.json({ success: true, message: 'Location deleted' });
   } catch (err) {
@@ -400,16 +429,25 @@ app.post('/api/game-results', (req, res) => {
 app.get('/api/leaderboard', (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
+    // Используем подзапрос для корректной работы RANK() с GROUP BY
     const results = db.prepare(`
       SELECT 
-        MAX(gr.total_score) as score,
-        u.first_name || ' ' || u.last_name as name,
-        MAX(gr.played_at) as played_at,
-        RANK() OVER (ORDER BY MAX(gr.total_score) DESC) as rank
-      FROM game_results gr
-      JOIN users u ON gr.user_id = u.id
-      GROUP BY gr.user_id
-      ORDER BY MAX(gr.total_score) DESC
+        user_id,
+        name,
+        score,
+        played_at,
+        RANK() OVER (ORDER BY score DESC) as rank
+      FROM (
+        SELECT 
+          gr.user_id,
+          u.first_name || ' ' || u.last_name as name,
+          MAX(gr.total_score) as score,
+          MAX(gr.played_at) as played_at
+        FROM game_results gr
+        JOIN users u ON gr.user_id = u.id
+        GROUP BY gr.user_id
+      )
+      ORDER BY score DESC
       LIMIT ?
     `).all(limit);
 
@@ -420,8 +458,22 @@ app.get('/api/leaderboard', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
-});
+// Initialize storage and start server
+async function startServer() {
+  try {
+    await initializeStorage();
+    console.log('✓ MinIO storage initialized');
+    
+    app.listen(PORT, () => {
+      console.log(`Server listening on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to initialize storage:', err);
+    console.log('Starting server without MinIO (uploads will fail)...');
+    app.listen(PORT, () => {
+      console.log(`Server listening on http://localhost:${PORT} (MinIO not available)`);
+    });
+  }
+}
 
-
+startServer();

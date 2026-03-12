@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import './Play.css'
 import ResultPage from './ResultPage'
-import ProfileMenu from '../components/ProfileMenu'
+import { ProfileMenu } from '../shared/ui'
 import { useGame } from '../features/game/hooks'
 import { gameApi } from '../shared/api'
 
@@ -155,6 +155,7 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
         </div>
         {user ? (
           <ProfileMenu 
+            variant="light"
             onNavigateToAccount={onNavigateToAccount}
             onLogout={onLogout}
           />

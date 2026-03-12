@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import './LeaderboardPage.css'
-import ProfileMenu from '../components/ProfileMenu'
+import { ProfileMenu } from '../shared/ui'
 import { leaderboardApi, LeaderboardPlayer } from '../shared/api'
 
 interface Player extends LeaderboardPlayer {
@@ -37,10 +37,10 @@ export default function LeaderboardPage({ user, userScore, userRank, isNewRecord
           const rank = calculateHypotheticalRank(leaderboardData, userScore)
           setHypotheticalRank(rank)
         } else {
-          // Для авторизованных: отметить их строку
+          // Для авторизованных: отметить их строку по user_id
           leaderboardData = leaderboardData.map((player: Player) => ({
             ...player,
-            isCurrentUser: player.name === `${user.first_name} ${user.last_name}`
+            isCurrentUser: player.user_id === user.id
           }))
         }
       }
@@ -73,6 +73,7 @@ export default function LeaderboardPage({ user, userScore, userRank, isNewRecord
         </div>
         {user && onNavigateToAccount && onLogout ? (
           <ProfileMenu 
+            variant="light"
             onNavigateToAccount={onNavigateToAccount}
             onLogout={onLogout}
           />
@@ -97,7 +98,7 @@ export default function LeaderboardPage({ user, userScore, userRank, isNewRecord
           </div>
           {players.map((player) => (
             <div 
-              key={player.rank} 
+              key={player.user_id} 
               className={`leaderboard-row ${player.isCurrentUser ? 'leaderboard-row-highlight' : ''}`}
             >
               <div className="leaderboard-cell">{player.rank}</div>

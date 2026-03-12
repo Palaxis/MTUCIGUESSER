@@ -17,13 +17,18 @@ export function useGame() {
   const [minZoom, setMinZoom] = useState(0.5)
   const [viewMode, setViewMode] = useState<'photo' | 'map'>('photo')
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
+  
+  // Отслеживание использованных локаций в текущей игре
+  const [usedLocationIds, setUsedLocationIds] = useState<number[]>([])
 
-  async function loadLocations() {
+  async function loadLocations(excludeIds: number[] = []) {
     try {
-      const response = await gameApi.getRandomLocation()
+      const response = await gameApi.getRandomLocation(excludeIds)
       if (response.location) {
         setLocations([response.location])
         setCurrentIndex(0)
+        // Добавляем ID в список использованных
+        setUsedLocationIds(prev => [...prev, response.location.id])
       }
     } catch (error) {
       console.error('Failed to load location:', error)
@@ -32,7 +37,8 @@ export function useGame() {
 
   useEffect(() => {
     gameApi.getFloors().then(setFloors)
-    loadLocations()
+    // Загружаем первую локацию при старте игры (без исключений)
+    loadLocations([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -96,7 +102,8 @@ export function useGame() {
       return true // Игра завершена
     } else {
       setRound(round + 1)
-      loadLocations()
+      // Передаём список использованных локаций для исключения
+      loadLocations(usedLocationIds)
       return false
     }
   }
@@ -131,7 +138,9 @@ export function useGame() {
     setSelectedFloor(null)
     setMapZoom(1)
     setViewMode('photo')
-    loadLocations()
+    // Сбрасываем список использованных локаций при новой игре
+    setUsedLocationIds([])
+    loadLocations([])
   }
 
   return {

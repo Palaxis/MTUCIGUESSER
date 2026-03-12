@@ -37,8 +37,9 @@ export const gameApi = {
     return response.data
   },
 
-  async getRandomLocation(): Promise<{ location: LocationForGame }> {
-    const response = await apiClient.get<{ location: LocationForGame }>('/api/locations/random')
+  async getRandomLocation(excludeIds: number[] = []): Promise<{ location: LocationForGame }> {
+    const params = excludeIds.length > 0 ? { exclude: excludeIds.join(',') } : {}
+    const response = await apiClient.get<{ location: LocationForGame }>('/api/locations/random', { params })
     return response.data
   },
 

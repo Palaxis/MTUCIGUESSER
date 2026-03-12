@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
+
+.ui-logo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.ui-logo--clickable {
+  cursor: pointer;
+}
+
+.ui-logo-icon {
+  flex-shrink: 0;
+}
+
+.ui-logo-text {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Sizes */
+.ui-logo--small .ui-logo-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.ui-logo--small .ui-logo-text {
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.ui-logo--medium .ui-logo-icon {
+  width: 49px;
+  height: 49px;
+}
+
+.ui-logo--medium .ui-logo-text {
+  font-size: 40px;
+  line-height: 49px;
+}
+
+.ui-logo--large .ui-logo-icon {
+  width: 60px;
+  height: 60px;
+}
+
+.ui-logo--large .ui-logo-text {
+  font-size: 48px;
+  line-height: 60px;
+}
+
+/* Variants */
+.ui-logo--dark .ui-logo-text {
+  color: #372579;
+}
+
+.ui-logo--light .ui-logo-text {
+  color: #FFFFFF;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .ui-logo--medium .ui-logo-text {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ui-logo--small .ui-logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ui-logo--small .ui-logo-text {
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  .ui-logo--medium .ui-logo-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .ui-logo--medium .ui-logo-text {
+    font-size: 28px;
+    line-height: 34px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ui-logo--medium .ui-logo-text {
+    font-size: 24px;
+    line-height: 30px;
+  }
+}
+
+

@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap');
+
+.ui-button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  border: none;
+  border-radius: 60px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.ui-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Sizes */
+.ui-button--small {
+  height: 40px;
+  min-width: 144px;
+  padding: 0 30px;
+  font-size: 18px;
+}
+
+.ui-button--medium {
+  height: 49px;
+  min-width: 144px;
+  padding: 0 40px;
+  font-size: 25px;
+  line-height: 30px;
+}
+
+.ui-button--large {
+  height: 49px;
+  min-width: 277px;
+  padding: 0 50px;
+  font-size: 25px;
+  line-height: 30px;
+}
+
+/* Variants */
+.ui-button--primary {
+  background: #372579;
+  color: #FFFFFF;
+}
+
+.ui-button--primary:hover:not(:disabled) {
+  background: #4a2f99;
+}
+
+.ui-button--secondary {
+  background: #FFFFFF;
+  border: 2px solid #372579;
+  color: #372579;
+}
+
+.ui-button--secondary:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.ui-button--text {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #372579;
+  text-decoration: underline;
+  border-radius: 0;
+}
+
+.ui-button--text:hover:not(:disabled) {
+  color: #4a2f99;
+}
+
+.ui-button--danger {
+  background: #F33F3F;
+  color: #FFFFFF;
+}
+
+.ui-button--danger:hover:not(:disabled) {
+  background: #d63535;
+}
+
+/* Full width */
+.ui-button--full-width {
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ui-button--small {
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .ui-button--medium {
+    height: 44px;
+    font-size: 20px;
+  }
+
+  .ui-button--large {
+    height: 48px;
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ui-button--small {
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .ui-button--medium {
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .ui-button--large {
+    height: 44px;
+    font-size: 20px;
+  }
+}
+

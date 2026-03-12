@@ -1,6 +1,7 @@
 import { apiClient } from './client'
 
 export interface LeaderboardPlayer {
+  user_id: number
   rank: number
   name: string
   score: number

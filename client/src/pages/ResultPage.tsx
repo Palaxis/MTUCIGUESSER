@@ -1,6 +1,6 @@
 import React from 'react'
 import './ResultPage.css'
-import ProfileMenu from '../components/ProfileMenu'
+import { ProfileMenu } from '../shared/ui'
 
 interface ResultPageProps {
   score: number
@@ -42,6 +42,7 @@ export default function ResultPage({
         </div>
         {user && onNavigateToAccount && onLogout ? (
           <ProfileMenu 
+            variant="light"
             onNavigateToAccount={onNavigateToAccount}
             onLogout={onLogout}
           />

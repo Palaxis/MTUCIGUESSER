@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Button, Input, Logo, Card } from '../shared/ui'
 import './RegistrationPage.css'
 
 interface RegistrationPageProps {
@@ -12,15 +13,19 @@ export default function RegistrationPage({ onRegister, onNavigateToLogin }: Regi
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
     try {
       await onRegister(email, password, firstName, lastName)
     } catch (err: any) {
       setError(err.response?.data?.error || 'Ошибка регистрации')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -33,66 +38,64 @@ export default function RegistrationPage({ onRegister, onNavigateToLogin }: Regi
       </div>
 
       <div className="register-header">
-        <div className="register-logo">
-          <img src="/mtuci-logo-darkblue.svg" alt="MTUCI" className="register-logo-icon" />
-          <h1 className="register-logo-text">MTUCI Guesser</h1>
-        </div>
+        <Logo variant="dark" size="medium" />
       </div>
 
       <div className="register-content">
-        <form className="register-form" onSubmit={handleRegister}>
-          <h2 className="register-title">Давайте знакомиться</h2>
+        <Card title="Давайте знакомиться">
+          <form onSubmit={handleRegister}>
+            {error && <div className="register-error">{error}</div>}
 
-          {error && <div className="register-error">{error}</div>}
+            <Input
+              type="text"
+              placeholder="Введите имя"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+            />
 
-          <input
-            type="text"
-            className="register-input"
-            placeholder="Введите имя"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            required
-          />
+            <Input
+              type="text"
+              placeholder="Введите фамилию"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+            />
 
-          <input
-            type="text"
-            className="register-input"
-            placeholder="Введите фамилию"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            required
-          />
+            <Input
+              type="email"
+              placeholder="Введите вашу почту"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-          <input
-            type="email"
-            className="register-input"
-            placeholder="Введите вашу почту"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+            <Input
+              type="password"
+              placeholder="Введите пароль"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-          <input
-            type="password"
-            className="register-input"
-            placeholder="Введите пароль"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+            <Button 
+              type="submit" 
+              variant="primary" 
+              size="large" 
+              disabled={loading}
+              style={{ margin: '30px auto 0', display: 'block' }}
+            >
+              {loading ? 'Создание...' : 'Создать аккаунт'}
+            </Button>
+          </form>
+        </Card>
 
-          <button type="submit" className="register-btn">
-            Создать аккаунт
-          </button>
-        </form>
-
-        <button 
-          className="register-login-btn" 
-          onClick={onNavigateToLogin}
-          type="button"
-        >
-          Уже есть аккаунт? Войти
-        </button>
+        <div className="register-login-link">
+          <span>Уже есть аккаунт?</span>
+          <Button variant="secondary" size="large" onClick={onNavigateToLogin}>
+            Войти
+          </Button>
+        </div>
       </div>
     </div>
   )

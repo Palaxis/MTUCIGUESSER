@@ -52,7 +52,7 @@
 
 .home-header {
   position: relative;
-  padding: 60px 80px;
+  padding: 80px 100px 0;
   z-index: 10;
   display: flex;
   justify-content: space-between;
@@ -155,7 +155,7 @@
   align-items: center;
   justify-content: center;
   z-index: 10;
-  padding: 40px 20px;
+  padding: 0 20px 80px;
 }
 
 .home-actions {
