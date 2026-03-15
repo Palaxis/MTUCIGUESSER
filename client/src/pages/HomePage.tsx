@@ -11,6 +11,7 @@ interface HomePageProps {
   onNavigateToAccount: () => void
   onLogout: () => void
   onNavigateToAdmin: () => void
+  onNavigateToDuel: () => void
 }
 
 export default function HomePage({ 
@@ -20,7 +21,8 @@ export default function HomePage({
   onNavigateToRegister,
   onNavigateToAccount,
   onLogout,
-  onNavigateToAdmin
+  onNavigateToAdmin,
+  onNavigateToDuel
 }: HomePageProps) {
   const [showRules, setShowRules] = useState(false)
 
@@ -62,6 +64,9 @@ export default function HomePage({
           <div className="home-actions">
             <button className="home-start-btn" onClick={onStartGame}>
               Начать игру
+            </button>
+            <button className="home-duel-btn" onClick={onNavigateToDuel}>
+              ⚔️ Дуэли
             </button>
             <button className="home-rules-btn" onClick={() => setShowRules(true)}>
               ?

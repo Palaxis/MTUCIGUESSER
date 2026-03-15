@@ -90,3 +90,4 @@ mtuci-guesser/
 - Настройте `MINIO_USE_SSL=true` если используете HTTPS
 
 
+

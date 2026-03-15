@@ -8,6 +8,7 @@ import AccountPage from '../pages/AccountPage'
 import Play from '../pages/Play'
 import Admin from '../pages/Admin'
 import LeaderboardPage from '../pages/LeaderboardPage'
+import DuelPage from '../pages/DuelPage'
 
 export default function App() {
   const { user, login, register, logout, updateUser } = useAuth()
@@ -19,7 +20,8 @@ export default function App() {
     navigateToAccount,
     navigateToPlay,
     navigateToAdmin,
-    navigateToLeaderboard
+    navigateToLeaderboard,
+    navigateToDuel
   } = useNavigation()
 
   const [gameScore, setGameScore] = useState<number | null>(null)
@@ -77,6 +79,7 @@ export default function App() {
           onNavigateToAccount={navigateToAccount}
           onLogout={handleLogout}
           onNavigateToAdmin={navigateToAdmin}
+          onNavigateToDuel={navigateToDuel}
         />
       )}
 
@@ -126,6 +129,14 @@ export default function App() {
           onPlayAgain={handlePlayAgain}
           onNavigateToAccount={navigateToAccount}
           onLogout={handleLogout}
+        />
+      )}
+
+      {currentPage === 'duel' && (
+        <DuelPage
+          user={user}
+          onNavigateToHome={navigateToHome}
+          onNavigateToLogin={navigateToLogin}
         />
       )}
     </>

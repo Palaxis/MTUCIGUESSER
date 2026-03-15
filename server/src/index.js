@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import http from 'http';
 import cors from 'cors';
 import morgan from 'morgan';
 import multer from 'multer';
@@ -7,6 +8,7 @@ import path from 'path';
 import imageSize from 'image-size';
 import session from 'express-session';
 import bcrypt from 'bcrypt';
+import { Server as SocketIOServer } from 'socket.io';
 import db from './db.js';
 import { 
   initializeStorage, 
@@ -16,6 +18,14 @@ import {
 } from './storage.js';
 
 const app = express();
+const server = http.createServer(app);
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({ 
@@ -339,7 +349,7 @@ app.get('/api/auth/me', (req, res) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const user = db.prepare('SELECT id, first_name, last_name, email FROM users WHERE id = ?').get(req.session.userId);
+  const user = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users WHERE id = ?').get(req.session.userId);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -458,19 +468,414 @@ app.get('/api/leaderboard', (req, res) => {
   }
 });
 
+// Avatar upload
+app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    if (!req.session.userId || req.session.userId !== userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (!req.file) return res.status(400).json({ error: 'Avatar image required' });
+
+    // Delete old avatar if exists
+    const existingUser = db.prepare('SELECT avatar_url FROM users WHERE id = ?').get(userId);
+    if (existingUser && existingUser.avatar_url) {
+      const oldObjectName = getObjectNameFromUrl(existingUser.avatar_url);
+      if (oldObjectName) await deleteFile(oldObjectName);
+    }
+
+    const timestamp = Date.now();
+    const ext = path.extname(req.file.originalname) || '.png';
+    const objectName = `avatars/avatar_${userId}_${timestamp}${ext}`;
+    const avatarUrl = await uploadFile(req.file.buffer, objectName, req.file.mimetype);
+
+    db.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').run(avatarUrl, userId);
+    const user = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users WHERE id = ?').get(userId);
+    res.json(user);
+  } catch (err) {
+    console.error('Error uploading avatar:', err);
+    res.status(500).json({ error: 'Failed to upload avatar' });
+  }
+});
+
+// ===================== DUEL SYSTEM (Socket.IO) =====================
+
+const DUEL_CONFIG = {
+  MAX_HP: 5000,
+  TOTAL_ROUNDS: 5,
+  PHOTO_TIME: 10,   // seconds to view photo
+  GUESS_TIME: 15,   // seconds to guess
+  RESULT_TIME: 8,   // seconds to show result
+};
+
+// In-memory room storage
+const duelRooms = new Map();
+
+function generateRoomCode() {
+  let code;
+  do {
+    code = Math.floor(100000 + Math.random() * 900000).toString();
+  } while (duelRooms.has(code));
+  return code;
+}
+
+function getRandomDuelLocation(excludeIds = []) {
+  let row;
+  if (excludeIds.length > 0) {
+    const placeholders = excludeIds.map(() => '?').join(',');
+    row = db.prepare(`SELECT * FROM locations WHERE id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`).get(...excludeIds);
+  } else {
+    row = db.prepare('SELECT * FROM locations ORDER BY RANDOM() LIMIT 1').get();
+  }
+  if (!row) return null;
+  const floor = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors WHERE id = ?').get(row.floor_id);
+  return { location: row, floor };
+}
+
+function calculateDuelScore(locationId, guessX, guessY, selectedFloor) {
+  const loc = db.prepare('SELECT * FROM locations WHERE id = ?').get(locationId);
+  if (!loc) return { score: 0 };
+  const floor = db.prepare('SELECT * FROM floors WHERE id = ?').get(loc.floor_id);
+  const gx = Number(guessX);
+  const gy = Number(guessY);
+  const dx = gx - loc.x;
+  const dy = gy - loc.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const diag = Math.sqrt(floor.width_px * floor.width_px + floor.height_px * floor.height_px) || 1;
+  const normalized = Math.min(1, distance / diag);
+  let score = Math.max(0, Math.round(100 * Math.pow(1 - normalized, 2)));
+  const isCorrectFloor = selectedFloor && Number(selectedFloor) === Number(loc.floor_id);
+  if (selectedFloor && !isCorrectFloor) {
+    score = Math.min(10, Math.round(score / 10));
+  }
+  return {
+    score,
+    correct_x: loc.x,
+    correct_y: loc.y,
+    floor_id: loc.floor_id,
+    is_correct_floor: isCorrectFloor
+  };
+}
+
+function cleanupRoom(roomCode) {
+  const room = duelRooms.get(roomCode);
+  if (room) {
+    if (room.photoTimer) clearTimeout(room.photoTimer);
+    if (room.guessTimer) clearTimeout(room.guessTimer);
+    if (room.resultTimer) clearTimeout(room.resultTimer);
+    duelRooms.delete(roomCode);
+  }
+}
+
+function startDuelRound(roomCode) {
+  const room = duelRooms.get(roomCode);
+  if (!room) return;
+
+  room.round++;
+  room.guesses = {};
+  room.roundResults = {};
+
+  // Get a random location
+  const data = getRandomDuelLocation(room.usedLocationIds);
+  if (!data) {
+    io.to(roomCode).emit('duel-error', { message: 'Нет доступных локаций' });
+    cleanupRoom(roomCode);
+    return;
+  }
+
+  room.usedLocationIds.push(data.location.id);
+  room.currentLocation = data.location;
+  room.currentFloor = data.floor;
+
+  // Send round start to both players (hide correct coordinates)
+  io.to(roomCode).emit('duel-round-start', {
+    round: room.round,
+    totalRounds: DUEL_CONFIG.TOTAL_ROUNDS,
+    location: {
+      id: data.location.id,
+      floor_id: data.location.floor_id,
+      image_path: data.location.image_path,
+      hint: data.location.hint || null
+    },
+    floor: data.floor,
+    photoTime: DUEL_CONFIG.PHOTO_TIME,
+    guessTime: DUEL_CONFIG.GUESS_TIME,
+    players: {
+      [room.players[0].odId]: { hp: room.hp[room.players[0].odId], name: room.players[0].name, avatar_url: room.players[0].avatar_url },
+      [room.players[1].odId]: { hp: room.hp[room.players[1].odId], name: room.players[1].name, avatar_url: room.players[1].avatar_url }
+    }
+  });
+
+  // Photo viewing timer
+  room.photoTimer = setTimeout(() => {
+    io.to(roomCode).emit('duel-photo-time-up');
+    
+    // Guess timer
+    room.guessTimer = setTimeout(() => {
+      // Auto-submit for anyone who hasn't guessed
+      for (const p of room.players) {
+        if (!room.guesses[p.odId]) {
+          room.guesses[p.odId] = { score: 0, auto: true };
+        }
+      }
+      processRoundResults(roomCode);
+    }, DUEL_CONFIG.GUESS_TIME * 1000);
+  }, DUEL_CONFIG.PHOTO_TIME * 1000);
+}
+
+function processRoundResults(roomCode) {
+  const room = duelRooms.get(roomCode);
+  if (!room || room.roundProcessed) return;
+  room.roundProcessed = true;
+
+  const p1 = room.players[0];
+  const p2 = room.players[1];
+  const g1 = room.guesses[p1.odId] || { score: 0, auto: true };
+  const g2 = room.guesses[p2.odId] || { score: 0, auto: true };
+
+  // Calculate HP damage based on who was more accurate
+  let damage1 = 0;
+  let damage2 = 0;
+
+  if (g1.score > g2.score) {
+    // P1 was more accurate. P2 takes damage based on their error
+    damage1 = 0;
+    damage2 = (100 - g2.score) * 10;
+  } else if (g2.score > g1.score) {
+    // P2 was more accurate. P1 takes damage based on their error
+    damage1 = (100 - g1.score) * 10;
+    damage2 = 0;
+  } else {
+    // Both same score (e.g. both timed out / completely wrong)
+    damage1 = (100 - g1.score) * 10;
+    damage2 = (100 - g2.score) * 10;
+  }
+
+  damage1 = Math.max(0, damage1);
+  damage2 = Math.max(0, damage2);
+
+  const oldHp1 = room.hp[p1.odId];
+  const oldHp2 = room.hp[p2.odId];
+  room.hp[p1.odId] = Math.max(0, room.hp[p1.odId] - damage1);
+  room.hp[p2.odId] = Math.max(0, room.hp[p2.odId] - damage2);
+
+  const roundResult = {
+    round: room.round,
+    location: {
+      correct_x: room.currentLocation.x,
+      correct_y: room.currentLocation.y,
+      floor_id: room.currentLocation.floor_id
+    },
+    floor: room.currentFloor,
+    players: {
+      [p1.odId]: {
+        name: p1.name,
+        avatar_url: p1.avatar_url,
+        score: g1.score,
+        guess_x: g1.guess_x,
+        guess_y: g1.guess_y,
+        selected_floor: g1.selected_floor,
+        damage: damage1,
+        oldHp: oldHp1,
+        hp: room.hp[p1.odId],
+        auto: g1.auto || false
+      },
+      [p2.odId]: {
+        name: p2.name,
+        avatar_url: p2.avatar_url,
+        score: g2.score,
+        guess_x: g2.guess_x,
+        guess_y: g2.guess_y,
+        selected_floor: g2.selected_floor,
+        damage: damage2,
+        oldHp: oldHp2,
+        hp: room.hp[p2.odId],
+        auto: g2.auto || false
+      }
+    }
+  };
+
+  // Check if anyone died
+  const p1Dead = room.hp[p1.odId] <= 0;
+  const p2Dead = room.hp[p2.odId] <= 0;
+  const gameOver = p1Dead || p2Dead || room.round >= DUEL_CONFIG.TOTAL_ROUNDS;
+
+  io.to(roomCode).emit('duel-round-result', roundResult);
+
+  if (gameOver) {
+    let winnerId = null;
+    if (p1Dead && p2Dead) {
+      // Both dead — higher HP wins (or tie)
+      winnerId = room.hp[p1.odId] >= room.hp[p2.odId] ? p1.odId : p2.odId;
+    } else if (p1Dead) {
+      winnerId = p2.odId;
+    } else if (p2Dead) {
+      winnerId = p1.odId;
+    } else {
+      // All rounds done — higher HP wins
+      winnerId = room.hp[p1.odId] >= room.hp[p2.odId] ? p1.odId : p2.odId;
+    }
+
+    const winner = room.players.find(p => p.odId === winnerId);
+    const loser = room.players.find(p => p.odId !== winnerId);
+
+    setTimeout(() => {
+      io.to(roomCode).emit('duel-game-over', {
+        winnerId,
+        winner: { name: winner.name, odId: winner.odId, avatar_url: winner.avatar_url, hp: room.hp[winner.odId] },
+        loser: { name: loser.name, odId: loser.odId, avatar_url: loser.avatar_url, hp: room.hp[loser.odId] }
+      });
+      cleanupRoom(roomCode);
+    }, DUEL_CONFIG.RESULT_TIME * 1000);
+  } else {
+    // Schedule next round after result display
+    room.resultTimer = setTimeout(() => {
+      room.roundProcessed = false;
+      startDuelRound(roomCode);
+    }, DUEL_CONFIG.RESULT_TIME * 1000);
+  }
+}
+
+io.on('connection', (socket) => {
+  console.log(`Socket connected: ${socket.id}`);
+  let currentRoomCode = null;
+
+  socket.on('create-room', (data) => {
+    const { userId, name, avatar_url } = data;
+    const roomCode = generateRoomCode();
+    const player = { odId: socket.id, odUserId: userId, name, avatar_url, socketId: socket.id };
+
+    duelRooms.set(roomCode, {
+      code: roomCode,
+      players: [player],
+      hp: { [socket.id]: DUEL_CONFIG.MAX_HP },
+      round: 0,
+      usedLocationIds: [],
+      guesses: {},
+      roundResults: {},
+      currentLocation: null,
+      currentFloor: null,
+      roundProcessed: false,
+      photoTimer: null,
+      guessTimer: null,
+      resultTimer: null
+    });
+
+    currentRoomCode = roomCode;
+    socket.join(roomCode);
+    socket.emit('room-created', { roomCode, player });
+    console.log(`Room ${roomCode} created by ${name}`);
+  });
+
+  socket.on('join-room', (data) => {
+    const { roomCode, userId, name, avatar_url } = data;
+    const room = duelRooms.get(roomCode);
+
+    if (!room) {
+      socket.emit('duel-error', { message: 'Комната не найдена' });
+      return;
+    }
+    if (room.players.length >= 2) {
+      socket.emit('duel-error', { message: 'Комната заполнена' });
+      return;
+    }
+
+    const player = { odId: socket.id, odUserId: userId, name, avatar_url, socketId: socket.id };
+    room.players.push(player);
+    room.hp[socket.id] = DUEL_CONFIG.MAX_HP;
+
+    currentRoomCode = roomCode;
+    socket.join(roomCode);
+
+    io.to(roomCode).emit('player-joined', {
+      roomCode,
+      players: room.players.map(p => ({ odId: p.odId, name: p.name, avatar_url: p.avatar_url }))
+    });
+    console.log(`${name} joined room ${roomCode}`);
+
+    // Auto-start game when 2 players are in
+    if (room.players.length === 2) {
+      setTimeout(() => {
+        io.to(roomCode).emit('duel-starting', { countdown: 3 });
+        setTimeout(() => {
+          startDuelRound(roomCode);
+        }, 3000);
+      }, 1500);
+    }
+  });
+
+  socket.on('submit-duel-guess', (data) => {
+    const { roomCode, guess_x, guess_y, selected_floor } = data;
+    const room = duelRooms.get(roomCode);
+    if (!room || !room.currentLocation) return;
+    if (room.guesses[socket.id]) return; // Already guessed
+
+    const result = calculateDuelScore(
+      room.currentLocation.id,
+      guess_x,
+      guess_y,
+      selected_floor
+    );
+
+    room.guesses[socket.id] = {
+      score: result.score,
+      guess_x,
+      guess_y,
+      selected_floor,
+      ...result
+    };
+
+    socket.emit('duel-guess-received', { score: result.score });
+
+    // If both players have guessed, process results immediately
+    if (Object.keys(room.guesses).length >= 2) {
+      if (room.guessTimer) clearTimeout(room.guessTimer);
+      processRoundResults(roomCode);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`Socket disconnected: ${socket.id}`);
+    if (currentRoomCode) {
+      const room = duelRooms.get(currentRoomCode);
+      if (room) {
+        // Notify the other player
+        socket.to(currentRoomCode).emit('opponent-disconnected', {
+          message: 'Противник отключился'
+        });
+        cleanupRoom(currentRoomCode);
+      }
+    }
+  });
+
+  socket.on('leave-room', () => {
+    if (currentRoomCode) {
+      const room = duelRooms.get(currentRoomCode);
+      if (room) {
+        socket.to(currentRoomCode).emit('opponent-disconnected', {
+          message: 'Противник покинул комнату'
+        });
+        cleanupRoom(currentRoomCode);
+      }
+      socket.leave(currentRoomCode);
+      currentRoomCode = null;
+    }
+  });
+});
+
 // Initialize storage and start server
 async function startServer() {
   try {
     await initializeStorage();
     console.log('✓ MinIO storage initialized');
     
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server listening on http://localhost:${PORT}`);
     });
   } catch (err) {
     console.error('Failed to initialize storage:', err);
     console.log('Starting server without MinIO (uploads will fail)...');
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server listening on http://localhost:${PORT} (MinIO not available)`);
     });
   }

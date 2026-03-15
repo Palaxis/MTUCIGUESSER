@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { userApi, User } from '../shared/api'
 import './AccountPage.css'
 
@@ -15,6 +15,9 @@ export default function AccountPage({ user, onLogout, onUpdate, onNavigateToHome
   const [email, setEmail] = useState(user.email)
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatar_url || null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setFirstName(user.first_name)
@@ -71,14 +74,43 @@ export default function AccountPage({ user, onLogout, onUpdate, onNavigateToHome
         <div className="account-main">
           <div className="account-photo-section">
             <div className="account-photo-circle">
-              <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-                <circle cx="60" cy="40" r="20" stroke="#8B8B8B" strokeWidth="6"/>
-                <path d="M25 100C25 70 40 55 60 55C80 55 95 70 95 100" stroke="#8B8B8B" strokeWidth="6"/>
-              </svg>
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Avatar" className="account-avatar-img" />
+              ) : (
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                  <circle cx="60" cy="40" r="20" stroke="#8B8B8B" strokeWidth="6"/>
+                  <path d="M25 100C25 70 40 55 60 55C80 55 95 70 95 100" stroke="#8B8B8B" strokeWidth="6"/>
+                </svg>
+              )}
             </div>
-            <button className="account-add-photo">
-              <span className="account-add-icon">+</span>
-              Добавить фото профиля
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                setUploadingAvatar(true)
+                try {
+                  const updatedUser = await userApi.uploadAvatar(user.id, file)
+                  onUpdate(updatedUser)
+                  setAvatarPreview(updatedUser.avatar_url || null)
+                  setMessage('Аватарка обновлена!')
+                } catch (err: any) {
+                  setMessage('Ошибка загрузки аватарки')
+                } finally {
+                  setUploadingAvatar(false)
+                }
+              }}
+            />
+            <button 
+              className="account-add-photo" 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingAvatar}
+            >
+              <span className="account-add-icon">{uploadingAvatar ? '…' : '+'}</span>
+              {uploadingAvatar ? 'Загрузка...' : (avatarPreview ? 'Сменить фото' : 'Добавить фото профиля')}
             </button>
           </div>
 

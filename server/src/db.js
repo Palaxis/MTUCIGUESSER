@@ -46,6 +46,7 @@ db.exec(`
     last_name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
+    avatar_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
   
@@ -61,6 +62,13 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_game_results_score ON game_results(total_score DESC);
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
+
+// Try to add avatar_url column to existing users table
+try {
+  db.exec('ALTER TABLE users ADD COLUMN avatar_url TEXT');
+} catch (err) {
+  // Column already exists or error occurred, ignore
+}
 
 // Create default admin user
 import bcrypt from 'bcrypt';
