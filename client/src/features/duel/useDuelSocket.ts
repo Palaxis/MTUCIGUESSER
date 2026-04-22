@@ -2,7 +2,16 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
 import type { DuelPhase, DuelRoundData, DuelRoundResult, DuelGameOver } from './types'
 
-const SERVER_URL = 'http://localhost:3001'
+// Автоматически определяем URL сервера на основе текущего хоста
+const getServerUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+  const { protocol, hostname } = window.location
+  return `${protocol}//${hostname}:3001`
+}
+
+const SERVER_URL = getServerUrl()
 
 export function useDuelSocket(user: any) {
   const socketRef = useRef<Socket | null>(null)

@@ -5,6 +5,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import multer from 'multer';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import imageSize from 'image-size';
 import session from 'express-session';
 import bcrypt from 'bcrypt';
@@ -17,11 +18,18 @@ import {
   getObjectNameFromUrl 
 } from './storage.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const server = http.createServer(app);
+
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+const corsOrigins = CORS_ORIGIN === '*' ? true : CORS_ORIGIN.split(',').map(o => o.trim());
+
 const io = new SocketIOServer(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: corsOrigins,
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -29,7 +37,7 @@ const io = new SocketIOServer(server, {
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({ 
-  origin: 'http://localhost:5173', 
+  origin: corsOrigins, 
   credentials: true 
 }));
 app.use(express.json());
@@ -863,20 +871,38 @@ io.on('connection', (socket) => {
   });
 });
 
+// Serve static files from client build in production
+const clientDistPath = path.join(__dirname, '../../client/dist');
+import fs from 'fs';
+
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  
+  // SPA fallback - serve index.html for all non-API routes
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+  console.log('✓ Serving static files from client/dist');
+}
+
 // Initialize storage and start server
 async function startServer() {
   try {
     await initializeStorage();
     console.log('✓ MinIO storage initialized');
     
-    server.listen(PORT, () => {
-      console.log(`Server listening on http://localhost:${PORT}`);
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server listening on http://0.0.0.0:${PORT}`);
+      console.log(`Access from internet: http://YOUR_PUBLIC_IP:${PORT}`);
     });
   } catch (err) {
     console.error('Failed to initialize storage:', err);
     console.log('Starting server without MinIO (uploads will fail)...');
-    server.listen(PORT, () => {
-      console.log(`Server listening on http://localhost:${PORT} (MinIO not available)`);
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server listening on http://0.0.0.0:${PORT} (MinIO not available)`);
     });
   }
 }

@@ -7,6 +7,7 @@ const MINIO_USE_SSL = process.env.MINIO_USE_SSL === 'true';
 const MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY || 'minioadmin';
 const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || 'minioadmin123';
 const MINIO_BUCKET = process.env.MINIO_BUCKET || 'mtuci-guesser';
+const MINIO_PUBLIC_ENDPOINT = process.env.MINIO_PUBLIC_ENDPOINT || MINIO_ENDPOINT;
 
 // Create S3 client configured for MinIO
 const s3Client = new S3Client({
@@ -92,9 +93,9 @@ export async function uploadFile(buffer, objectName, contentType) {
 
   await s3Client.send(command);
   
-  // Return URL for accessing the file
+  // Return URL for accessing the file (use public endpoint for external access)
   const protocol = MINIO_USE_SSL ? 'https' : 'http';
-  return `${protocol}://${MINIO_ENDPOINT}:${MINIO_PORT}/${MINIO_BUCKET}/${objectName}`;
+  return `${protocol}://${MINIO_PUBLIC_ENDPOINT}:${MINIO_PORT}/${MINIO_BUCKET}/${objectName}`;
 }
 
 /**

@@ -24,6 +24,7 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
   const [minZoom, setMinZoom] = useState(0.5)
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
+  const mapContainerMobileRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<HTMLImageElement | null>(null)
   const photoRef = useRef<HTMLDivElement | null>(null)
 
@@ -38,11 +39,15 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
   }, [])
 
   function calculateFitZoom() {
-    if (!selectedFloor || floors.length === 0 || !mapContainerRef.current) return null
+    if (!selectedFloor || floors.length === 0) return null
     const currentFloor = floors.find(f => f.id === selectedFloor)
     if (!currentFloor) return null
 
-    const containerRect = mapContainerRef.current.getBoundingClientRect()
+    // Try desktop container first, then mobile
+    const container = mapContainerRef.current || mapContainerMobileRef.current
+    if (!container) return null
+
+    const containerRect = container.getBoundingClientRect()
     const containerWidth = containerRect.width - 4
     const containerHeight = containerRect.height - 4
 
@@ -137,13 +142,53 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
   }
 
   function onMapClick(e: React.MouseEvent<HTMLImageElement>) {
-    if (!selectedFloor || !mapRef.current) return
+    if (!selectedFloor) return
     const currentFloor = floors.find(f => f.id === selectedFloor)
     if (!currentFloor) return
-    const rect = mapRef.current.getBoundingClientRect()
+    const rect = e.currentTarget.getBoundingClientRect()
     const x = Math.round((e.clientX - rect.left) * (currentFloor.width_px / rect.width))
     const y = Math.round((e.clientY - rect.top) * (currentFloor.height_px / rect.height))
     setGuess({ x, y })
+  }
+
+  // Touch handling for map - distinguish tap from scroll
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null)
+  const mapInnerRef = useRef<HTMLDivElement | null>(null)
+
+  function onMapTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    const touch = e.touches[0]
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now()
+    }
+  }
+
+  function onMapTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+    if (!touchStartRef.current || !selectedFloor) return
+    
+    const touch = e.changedTouches[0]
+    const deltaX = Math.abs(touch.clientX - touchStartRef.current.x)
+    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y)
+    const deltaTime = Date.now() - touchStartRef.current.time
+
+    // If it's a tap (small movement, short time) - place marker
+    if (deltaX < 15 && deltaY < 15 && deltaTime < 300) {
+      const currentFloor = floors.find(f => f.id === selectedFloor)
+      if (!currentFloor) return
+      
+      // Find the img element inside the container
+      const container = e.currentTarget
+      const img = container.querySelector('img')
+      if (!img) return
+      
+      const rect = img.getBoundingClientRect()
+      const x = Math.round((touch.clientX - rect.left) * (currentFloor.width_px / rect.width))
+      const y = Math.round((touch.clientY - rect.top) * (currentFloor.height_px / rect.height))
+      setGuess({ x, y })
+    }
+    
+    touchStartRef.current = null
   }
 
   function scrollPhotoLeft() {
@@ -167,6 +212,23 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
   }
   function handlePhotoMouseUp() { setIsDragging(false) }
   function handlePhotoMouseLeave() { setIsDragging(false) }
+
+  // Touch events for photo scrolling
+  function handlePhotoTouchStart(e: React.TouchEvent) {
+    if (!photoRef.current) return
+    const touch = e.touches[0]
+    setIsDragging(true)
+    setStartX(touch.pageX - photoRef.current.offsetLeft)
+    setScrollLeft(photoRef.current.scrollLeft)
+  }
+  function handlePhotoTouchMove(e: React.TouchEvent) {
+    if (!isDragging || !photoRef.current) return
+    const touch = e.touches[0]
+    const x = touch.pageX - photoRef.current.offsetLeft
+    const walk = (x - startX) * 1.5
+    photoRef.current.scrollLeft = scrollLeft - walk
+  }
+  function handlePhotoTouchEnd() { setIsDragging(false) }
 
   // If user is not logged in
   if (!user) {
@@ -317,8 +379,9 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
   if (duel.phase === 'photo' && duel.roundData) {
     const rd = duel.roundData
     return (
-      <div className="duel-page duel-page-dark">
-        <header className="duel-play-header">
+      <div className="duel-page duel-page-dark duel-photo-page">
+        {/* Desktop Header */}
+        <header className="duel-play-header duel-play-header-desktop">
           <div className="duel-play-logo">
             <img src="/mtuci-logo-white.svg" alt="MTUCI" className="duel-play-logo-icon" />
             <h1 className="duel-play-logo-text">MTUCI Guesser</h1>
@@ -331,10 +394,25 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
           </div>
         </header>
 
+        {/* Mobile Header */}
+        <header className="duel-play-header duel-play-header-mobile duel-photo-header-mobile">
+          <div className="duel-header-top">
+            <div className="duel-round-badge">
+              📷 Раунд {rd.round}/{rd.totalRounds}
+            </div>
+            <div className="duel-timer-compact duel-timer-photo">
+              {photoTimer}с
+            </div>
+          </div>
+          <div className="duel-hp-bars-mobile">
+            {renderHpBarsMobile(rd.players, duel.myId)}
+          </div>
+        </header>
+
         <div className="duel-timer-bar">
           <div className="duel-timer-fill" style={{ width: `${(photoTimer / (rd.photoTime || 10)) * 100}%` }}></div>
         </div>
-        <div className="duel-timer-text">Осмотр: {photoTimer}с</div>
+        <div className="duel-timer-text duel-timer-text-desktop">Осмотр: {photoTimer}с</div>
 
         <div className="duel-photo-section">
           <div className="duel-photo-wrapper">
@@ -350,8 +428,11 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}
               onMouseLeave={handlePhotoMouseLeave}
+              onTouchStart={handlePhotoTouchStart}
+              onTouchMove={handlePhotoTouchMove}
+              onTouchEnd={handlePhotoTouchEnd}
             >
-              <img className="duel-photo" src={rd.location.image_path} alt="Найди это место" />
+              <img className="duel-photo" src={rd.location.image_path} alt="Найди это место" draggable={false} />
             </div>
             <button className="duel-arrow duel-arrow-right" onClick={scrollPhotoRight}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -359,6 +440,11 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
               </svg>
             </button>
           </div>
+        </div>
+
+        {/* Mobile hint */}
+        <div className="duel-photo-hint-mobile">
+          👆 Свайпай фото для осмотра
         </div>
       </div>
     )
@@ -368,9 +454,12 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
   if (duel.phase === 'guessing' && duel.roundData) {
     const rd = duel.roundData
     const currentFloor = selectedFloor ? floors.find(f => f.id === selectedFloor) : null
+    const sortedFloors = [...floors].sort((a, b) => parseInt(a.level || '0') - parseInt(b.level || '0')).slice(0, 5)
+    
     return (
-      <div className="duel-page duel-page-dark">
-        <header className="duel-play-header">
+      <div className="duel-page duel-page-dark duel-guessing-page">
+        {/* ===== DESKTOP HEADER ===== */}
+        <header className="duel-play-header duel-play-header-desktop">
           <div className="duel-play-logo">
             <img src="/mtuci-logo-white.svg" alt="MTUCI" className="duel-play-logo-icon" />
             <h1 className="duel-play-logo-text">MTUCI Guesser</h1>
@@ -383,87 +472,106 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
           </div>
         </header>
 
+        {/* ===== MOBILE HEADER ===== */}
+        <header className="duel-play-header duel-play-header-mobile">
+          <div className="duel-header-top">
+            <div className="duel-round-badge">
+              {rd.round}/{rd.totalRounds}
+            </div>
+            <div className="duel-timer-compact">
+              {duel.guessReceived ? '✓' : `${guessTimer}с`}
+            </div>
+          </div>
+          <div className="duel-hp-bars-mobile">
+            {renderHpBarsMobile(rd.players, duel.myId)}
+          </div>
+        </header>
+
+        {/* Timer Bar */}
         <div className="duel-timer-bar duel-timer-bar-guess">
           <div className="duel-timer-fill duel-timer-fill-guess" style={{ width: `${(guessTimer / (rd.guessTime || 15)) * 100}%` }}></div>
         </div>
-        <div className="duel-timer-text">
+        <div className="duel-timer-text duel-timer-text-desktop">
           {duel.guessReceived ? '✓ Ответ принят!' : `Ответь: ${guessTimer}с`}
         </div>
 
+        {/* ===== DESKTOP LAYOUT ===== */}
         <div className="duel-content-map">
           <div className="duel-guess-layout">
             <div className="duel-map-section">
-            <h3 className="duel-map-title">Найди точку на карте</h3>
-            <div className="duel-map-container" ref={mapContainerRef}>
-              {currentFloor ? (
-                <div className="duel-map-inner">
-                  <div className="duel-map-wrapper" style={{ 
-                    width: `${currentFloor.width_px * mapZoom}px`,
-                    height: `${currentFloor.height_px * mapZoom}px`,
-                    position: 'relative'
-                  }}>
-                    <img
-                      ref={mapRef}
-                      className="duel-map"
-                      src={currentFloor.image_path}
-                      alt="Карта этажа"
-                      onClick={onMapClick}
-                      style={{ 
-                        width: '100%',
-                        height: '100%'
-                      }}
-                    />
-                    {guess && (
-                      <div
-                        className="duel-pin duel-pin-guess"
-                        style={{
-                          left: `${(guess.x / currentFloor.width_px) * 100}%`,
-                          top: `${(guess.y / currentFloor.height_px) * 100}%`
+              <h3 className="duel-map-title">Найди точку на карте</h3>
+              <div className="duel-map-container" ref={mapContainerRef}>
+                {currentFloor ? (
+                  <div 
+                    className="duel-map-inner"
+                    onTouchStart={onMapTouchStart}
+                    onTouchEnd={onMapTouchEnd}
+                  >
+                    <div className="duel-map-wrapper" style={{ 
+                      width: `${currentFloor.width_px * mapZoom}px`,
+                      height: `${currentFloor.height_px * mapZoom}px`,
+                      position: 'relative'
+                    }}>
+                      <img
+                        ref={mapRef}
+                        className="duel-map"
+                        src={currentFloor.image_path}
+                        alt="Карта этажа"
+                        onClick={onMapClick}
+                        draggable={false}
+                        style={{ 
+                          width: '100%',
+                          height: '100%'
                         }}
                       />
-                    )}
+                      {guess && (
+                        <div
+                          className="duel-pin duel-pin-guess"
+                          style={{
+                            left: `${(guess.x / currentFloor.width_px) * 100}%`,
+                            top: `${(guess.y / currentFloor.height_px) * 100}%`
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="duel-map-placeholder">Выберите этаж</div>
-              )}
+                ) : (
+                  <div className="duel-map-placeholder">Выберите этаж</div>
+                )}
 
-              {currentFloor && (
-                <div className="duel-zoom-controls">
-                  <button 
-                    className="duel-zoom-btn" 
-                    onClick={() => setMapZoom(Math.min(mapZoom + 0.2, 3))}
-                    title="Увеличить (макс. 3x)"
-                  >
-                    <span className="duel-zoom-icon">+</span>
-                  </button>
-                  <button 
-                    className="duel-zoom-btn" 
-                    onClick={() => setMapZoom(Math.max(mapZoom - 0.2, minZoom))}
-                    disabled={mapZoom <= minZoom}
-                    title="Уменьшить"
-                  >
-                    <span className="duel-zoom-icon">−</span>
-                  </button>
-                  <button 
-                    className="duel-zoom-btn duel-zoom-reset" 
-                    onClick={() => setMapZoom(minZoom)}
-                    title="Вернуть к начальному масштабу"
-                  >
-                    <span className="duel-zoom-icon">◻</span>
-                  </button>
-                </div>
-              )}
+                {currentFloor && (
+                  <div className="duel-zoom-controls">
+                    <button 
+                      className="duel-zoom-btn" 
+                      onClick={() => setMapZoom(Math.min(mapZoom + 0.2, 3))}
+                      title="Увеличить (макс. 3x)"
+                    >
+                      <span className="duel-zoom-icon">+</span>
+                    </button>
+                    <button 
+                      className="duel-zoom-btn" 
+                      onClick={() => setMapZoom(Math.max(mapZoom - 0.2, minZoom))}
+                      disabled={mapZoom <= minZoom}
+                      title="Уменьшить"
+                    >
+                      <span className="duel-zoom-icon">−</span>
+                    </button>
+                    <button 
+                      className="duel-zoom-btn duel-zoom-reset" 
+                      onClick={() => setMapZoom(minZoom)}
+                      title="Вернуть к начальному масштабу"
+                    >
+                      <span className="duel-zoom-icon">◻</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="duel-sidebar">
-            <div className="duel-floor-selection">
-              <h3 className="duel-floor-title">Выбери этаж</h3>
-              {[...floors]
-                .sort((a, b) => parseInt(a.level || '0') - parseInt(b.level || '0'))
-                .slice(0, 5)
-                .map((floor, idx) => (
+            <div className="duel-sidebar">
+              <div className="duel-floor-selection">
+                <h3 className="duel-floor-title">Выбери этаж</h3>
+                {sortedFloors.map((floor, idx) => (
                   <label key={floor.id} className="duel-floor-option">
                     <input
                       type="radio"
@@ -475,19 +583,116 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
                     <span className="duel-floor-label">{floor.level || `${idx + 1} этаж`}</span>
                   </label>
                 ))}
+              </div>
             </div>
+          </div>
+
+          <button
+            className="duel-submit-btn"
+            onClick={handleSubmitGuess}
+            disabled={(!guess || !selectedFloor) || duel.guessReceived}
+          >
+            {duel.guessReceived ? '✓ Принято' : 'Ответить'}
+          </button>
+        </div>
+
+        {/* ===== MOBILE LAYOUT ===== */}
+        {/* Floor Selection - Horizontal Pills */}
+        <div className="duel-floor-pills">
+          {sortedFloors.map((floor, idx) => (
+            <button
+              key={floor.id}
+              className={`duel-floor-pill ${selectedFloor === floor.id ? 'duel-floor-pill-active' : ''}`}
+              onClick={() => setSelectedFloor(floor.id)}
+            >
+              {floor.level || `${idx + 1}`}
+            </button>
+          ))}
+        </div>
+
+        {/* Map Section - Full Width */}
+        <div className="duel-map-section-mobile">
+          <div className="duel-map-container-mobile" ref={mapContainerMobileRef}>
+            {currentFloor ? (
+              <div 
+                className="duel-map-inner"
+                ref={mapInnerRef}
+                onTouchStart={onMapTouchStart}
+                onTouchEnd={onMapTouchEnd}
+              >
+                <div className="duel-map-wrapper" style={{ 
+                  width: `${currentFloor.width_px * mapZoom}px`,
+                  height: `${currentFloor.height_px * mapZoom}px`,
+                  position: 'relative'
+                }}>
+                  <img
+                    ref={mapRef}
+                    className="duel-map"
+                    src={currentFloor.image_path}
+                    alt="Карта этажа"
+                    onClick={onMapClick}
+                    draggable={false}
+                    style={{ 
+                      width: '100%',
+                      height: '100%'
+                    }}
+                  />
+                  {guess && (
+                    <div
+                      className="duel-pin duel-pin-guess duel-pin-mobile"
+                      style={{
+                        left: `${(guess.x / currentFloor.width_px) * 100}%`,
+                        top: `${(guess.y / currentFloor.height_px) * 100}%`
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="duel-map-placeholder-mobile">
+                <span>👆</span>
+                <span>Выбери этаж выше</span>
+              </div>
+            )}
+
+            {/* Zoom Controls - Larger for touch */}
+            {currentFloor && (
+              <div className="duel-zoom-controls-mobile">
+                <button 
+                  className="duel-zoom-btn-mobile" 
+                  onClick={() => setMapZoom(Math.min(mapZoom + 0.3, 3))}
+                >
+                  +
+                </button>
+                <button 
+                  className="duel-zoom-btn-mobile" 
+                  onClick={() => setMapZoom(Math.max(mapZoom - 0.3, minZoom))}
+                  disabled={mapZoom <= minZoom}
+                >
+                  −
+                </button>
+                <button 
+                  className="duel-zoom-btn-mobile duel-zoom-btn-reset" 
+                  onClick={() => setMapZoom(minZoom)}
+                >
+                  ⟲
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <button
-          className="duel-submit-btn"
-          onClick={handleSubmitGuess}
-          disabled={(!guess || !selectedFloor) || duel.guessReceived}
-        >
-          {duel.guessReceived ? '✓ Принято' : 'Ответить'}
-        </button>
+        {/* Fixed Bottom Submit Button */}
+        <div className="duel-submit-container-mobile">
+          <button
+            className="duel-submit-btn-mobile"
+            onClick={handleSubmitGuess}
+            disabled={(!guess || !selectedFloor) || duel.guessReceived}
+          >
+            {duel.guessReceived ? '✓ Принято' : guess ? 'Ответить' : 'Выбери точку'}
+          </button>
+        </div>
       </div>
-    </div>
     )
   }
 
@@ -694,6 +899,37 @@ function renderHpBars(players: Record<string, { hp: number; name: string; avatar
               </div>
               <span className="duel-hp-value">{p.hp}</span>
             </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Helper: render compact HP bars for mobile
+function renderHpBarsMobile(players: Record<string, { hp: number; name: string; avatar_url: string | null }>, myId: string | null) {
+  const ids = Object.keys(players)
+  const myIdx = ids.findIndex(id => id === myId)
+  const orderedIds = myIdx >= 0 ? [ids[myIdx], ...ids.filter(id => id !== myId)] : ids
+
+  return (
+    <div className="duel-hp-mobile-row">
+      {orderedIds.map((id, i) => {
+        const p = players[id]
+        const hpPercent = (p.hp / 5000) * 100
+        return (
+          <div key={id} className={`duel-hp-mobile-item ${i === 0 ? 'duel-hp-mobile-me' : 'duel-hp-mobile-opp'}`}>
+            <div className="duel-hp-mobile-avatar">
+              {p.avatar_url ? (
+                <img src={p.avatar_url} alt="" />
+              ) : (
+                <span>{p.name.charAt(0)}</span>
+              )}
+            </div>
+            <div className="duel-hp-mobile-bar">
+              <div className="duel-hp-mobile-fill" style={{ width: `${hpPercent}%` }}></div>
+            </div>
+            <span className="duel-hp-mobile-value">{p.hp}</span>
           </div>
         )
       })}

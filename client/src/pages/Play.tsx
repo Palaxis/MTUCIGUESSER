@@ -109,6 +109,66 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
     setIsDragging(false)
   }
 
+  // Touch events for photo scrolling
+  function handlePhotoTouchStart(e: React.TouchEvent) {
+    if (!photoRef.current) return
+    const touch = e.touches[0]
+    setIsDragging(true)
+    setStartX(touch.pageX - photoRef.current.offsetLeft)
+    setScrollLeft(photoRef.current.scrollLeft)
+  }
+
+  function handlePhotoTouchMove(e: React.TouchEvent) {
+    if (!isDragging || !photoRef.current) return
+    const touch = e.touches[0]
+    const x = touch.pageX - photoRef.current.offsetLeft
+    const walk = (x - startX) * 1.5
+    photoRef.current.scrollLeft = scrollLeft - walk
+  }
+
+  function handlePhotoTouchEnd() {
+    setIsDragging(false)
+  }
+
+  // Touch handling for map - distinguish tap from scroll
+  const mapTouchStartRef = useRef<{ x: number; y: number; time: number } | null>(null)
+
+  function onMapTouchStart(e: React.TouchEvent) {
+    const touch = e.touches[0]
+    mapTouchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now()
+    }
+  }
+
+  function onMapTouchEnd(e: React.TouchEvent) {
+    if (!mapTouchStartRef.current || !selectedFloor) return
+    
+    const touch = e.changedTouches[0]
+    const deltaX = Math.abs(touch.clientX - mapTouchStartRef.current.x)
+    const deltaY = Math.abs(touch.clientY - mapTouchStartRef.current.y)
+    const deltaTime = Date.now() - mapTouchStartRef.current.time
+
+    // If it's a tap (small movement, short time) - place marker
+    if (deltaX < 15 && deltaY < 15 && deltaTime < 300) {
+      const currentFloor = floors.find(f => f.id === selectedFloor)
+      if (!currentFloor) return
+      
+      // Find the img element inside the container
+      const container = e.currentTarget as HTMLElement
+      const img = container.querySelector('img')
+      if (!img) return
+      
+      const rect = img.getBoundingClientRect()
+      const x = Math.round((touch.clientX - rect.left) * (currentFloor.width_px / rect.width))
+      const y = Math.round((touch.clientY - rect.top) * (currentFloor.height_px / rect.height))
+      setGuess({ x, y })
+    }
+    
+    mapTouchStartRef.current = null
+  }
+
   function onMapClick(e: React.MouseEvent<HTMLImageElement>) {
     if (!selectedFloor || !mapRef.current) return
     const currentFloor = floors.find(f => f.id === selectedFloor)
@@ -189,12 +249,16 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}
               onMouseLeave={handlePhotoMouseLeave}
+              onTouchStart={handlePhotoTouchStart}
+              onTouchMove={handlePhotoTouchMove}
+              onTouchEnd={handlePhotoTouchEnd}
             >
               {currentLocation && (
                 <img 
                   className="play-photo" 
                   src={currentLocation.image_path} 
                   alt="Найди это место"
+                  draggable={false}
                 />
               )}
             </div>
@@ -223,7 +287,11 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
               
               <div className="play-map-container" ref={mapContainerRef}>
                 {currentFloor ? (
-                  <div className="play-map-inner">
+                  <div 
+                    className="play-map-inner"
+                    onTouchStart={onMapTouchStart}
+                    onTouchEnd={onMapTouchEnd}
+                  >
                     <div className="play-map-wrapper" style={{ 
                       width: `${currentFloor.width_px * mapZoom}px`,
                       height: `${currentFloor.height_px * mapZoom}px`,
@@ -235,6 +303,7 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
                         src={currentFloor.image_path}
                         alt="Карта этажа"
                         onClick={onMapClick}
+                        draggable={false}
                         style={{ 
                           width: '100%',
                           height: '100%'
