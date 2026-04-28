@@ -239,7 +239,7 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
           <div className="duel-bg-circle duel-bg-circle-2"></div>
         </div>
         <div className="duel-center-content">
-          <div className="duel-logo">
+          <div className="duel-logo" onClick={onNavigateToHome} style={{ cursor: 'pointer' }}>
             <img src="/mtuci-logo-darkblue.svg" alt="MTUCI" className="duel-logo-icon" />
             <h1 className="duel-logo-text">MTUCI Guesser</h1>
           </div>
@@ -317,7 +317,7 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
           <div className="duel-bg-circle duel-bg-circle-2"></div>
         </div>
         <div className="duel-center-content">
-          <div className="duel-logo">
+          <div className="duel-logo" onClick={onNavigateToHome} style={{ cursor: 'pointer' }}>
             <img src="/mtuci-logo-darkblue.svg" alt="MTUCI" className="duel-logo-icon" />
             <h1 className="duel-logo-text">MTUCI Guesser</h1>
           </div>
@@ -382,7 +382,7 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
       <div className="duel-page duel-page-dark duel-photo-page">
         {/* Desktop Header */}
         <header className="duel-play-header duel-play-header-desktop">
-          <div className="duel-play-logo">
+          <div className="duel-play-logo" onClick={onNavigateToHome} style={{ cursor: 'pointer' }}>
             <img src="/mtuci-logo-white.svg" alt="MTUCI" className="duel-play-logo-icon" />
             <h1 className="duel-play-logo-text">MTUCI Guesser</h1>
           </div>
@@ -460,7 +460,7 @@ export default function DuelPage({ user, onNavigateToHome, onNavigateToLogin }: 
       <div className="duel-page duel-page-dark duel-guessing-page">
         {/* ===== DESKTOP HEADER ===== */}
         <header className="duel-play-header duel-play-header-desktop">
-          <div className="duel-play-logo">
+          <div className="duel-play-logo" onClick={onNavigateToHome} style={{ cursor: 'pointer' }}>
             <img src="/mtuci-logo-white.svg" alt="MTUCI" className="duel-play-logo-icon" />
             <h1 className="duel-play-logo-text">MTUCI Guesser</h1>
           </div>

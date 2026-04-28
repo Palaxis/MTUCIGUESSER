@@ -7,15 +7,20 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import imageSize from 'image-size';
-import session from 'express-session';
+import cookieParser from 'cookie-parser';
 import bcrypt from 'bcrypt';
 import { Server as SocketIOServer } from 'socket.io';
 import db from './db.js';
+import { createAuthRouter } from './auth/routes/authRoutes.js';
+import { attachAuthIfPresent, isOwnResource, requireAuth, requirePermission } from './auth/middleware/authMiddleware.js';
+import { buildUserWithAccess } from './auth/services/authService.js';
+import { getWeatherHint } from './services/weatherHintService.js';
 import { 
   initializeStorage, 
   uploadFile, 
   deleteFile, 
-  getObjectNameFromUrl 
+  getObjectNameFromUrl,
+  getSignedFileUrl
 } from './storage.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,21 +46,18 @@ app.use(cors({
   credentials: true 
 }));
 app.use(express.json());
+app.use(cookieParser());
 app.use(morgan('dev'));
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'mtuci-guesser-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
-}));
+
+const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 // Use memory storage for multer - files will be uploaded to MinIO
 const upload = multer({ 
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+  limits: { fileSize: MAX_UPLOAD_SIZE_BYTES }
 });
 
-const getUserByIdStmt = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users WHERE id = ?');
 const getRolesByUserIdStmt = db.prepare(`
   SELECT r.name
   FROM roles r
@@ -73,6 +75,9 @@ const assignRoleByNameStmt = db.prepare(`
   INSERT OR IGNORE INTO user_roles (user_id, role_id)
   SELECT ?, id FROM roles WHERE name = ?
 `);
+const externalApiRateWindowMs = 60 * 1000;
+const externalApiRateMax = Number.parseInt(process.env.EXTERNAL_API_RATE_LIMIT || '30', 10);
+const externalApiRateStore = new Map();
 
 function getUserRoles(userId) {
   return getRolesByUserIdStmt.all(userId).map((row) => row.name);
@@ -82,43 +87,78 @@ function getUserPermissions(userId) {
   return getPermissionsByUserIdStmt.all(userId).map((row) => row.name);
 }
 
-function buildUserWithAccess(user) {
-  const roles = getUserRoles(user.id);
-  const permissions = getUserPermissions(user.id);
-  return { ...user, roles, permissions };
+function parsePositiveInt(value, fallback, min = 1, max = 100) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
 }
 
-function requireAuth(req, res, next) {
-  if (!req.session.userId) {
-    return res.status(401).json({ error: 'Not authenticated' });
+function parseSortDir(value, fallback = 'asc') {
+  if (value === 'desc') return 'DESC';
+  if (value === 'asc') return 'ASC';
+  return fallback === 'desc' ? 'DESC' : 'ASC';
+}
+
+function toPaginatedResponse(items, total, page, pageSize) {
+  return { items, total, page, pageSize };
+}
+
+function validateRequiredTextField(value, fieldName, maxLen = 100) {
+  if (typeof value !== 'string' || !value.trim()) {
+    return `${fieldName} is required`;
   }
-  const user = getUserByIdStmt.get(req.session.userId);
-  if (!user) {
-    return res.status(401).json({ error: 'Not authenticated' });
+  if (value.trim().length > maxLen) {
+    return `${fieldName} is too long`;
   }
-  req.auth = {
-    userId: user.id,
-    user,
-    roles: getUserRoles(user.id),
-    permissions: getUserPermissions(user.id)
-  };
-  next();
+  return null;
 }
 
-function requirePermission(permission) {
-  return (req, res, next) => {
-    if (!req.auth) {
-      return requireAuth(req, res, () => requirePermission(permission)(req, res, next));
-    }
-    if (!req.auth.permissions.includes(permission)) {
-      return res.status(403).json({ error: 'Forbidden', requiredPermission: permission });
-    }
-    next();
-  };
+function buildAbsoluteAppUrl(pathname) {
+  const appUrl = process.env.PUBLIC_APP_URL || '';
+  if (appUrl) {
+    return `${appUrl.replace(/\/+$/, '')}${pathname}`;
+  }
+  return pathname;
 }
 
-function isOwnResource(req, targetUserId) {
-  return req.auth && Number(req.auth.userId) === Number(targetUserId);
+function externalApiRateLimit(req, res, next) {
+  const key = req.ip || 'unknown';
+  const now = Date.now();
+  const entry = externalApiRateStore.get(key);
+  if (!entry || now > entry.resetAt) {
+    externalApiRateStore.set(key, { count: 1, resetAt: now + externalApiRateWindowMs });
+    return next();
+  }
+  if (entry.count >= externalApiRateMax) {
+    return res.status(429).json({ error: 'Too many external API requests. Please retry later.' });
+  }
+  entry.count += 1;
+  externalApiRateStore.set(key, entry);
+  return next();
+}
+
+function ensureImageFileOrThrow(file) {
+  if (!file) return { ok: false, status: 400, error: 'Image file is required' };
+  if (!ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype)) {
+    return { ok: false, status: 400, error: `Unsupported MIME type: ${file.mimetype}` };
+  }
+  if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+    return { ok: false, status: 400, error: `File is too large. Max ${Math.round(MAX_UPLOAD_SIZE_BYTES / 1024 / 1024)}MB` };
+  }
+  return { ok: true };
+}
+
+async function signRowImage(row, field = 'image_path') {
+  if (!row || !row[field]) return row;
+  const objectName = getObjectNameFromUrl(row[field]);
+  if (!objectName) return row;
+  try {
+    const signedUrl = await getSignedFileUrl(objectName, 300);
+    return { ...row, [field]: signedUrl };
+  } catch (error) {
+    console.warn(`Failed to sign URL for ${objectName}`, error);
+    return row;
+  }
 }
 
 // Health
@@ -126,22 +166,100 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true });
 });
 
-// Floors
-app.get('/api/floors', (req, res) => {
+app.get('/robots.txt', (_req, res) => {
+  res.type('text/plain').send(
+    [
+      'User-agent: *',
+      'Allow: /',
+      'Disallow: /admin',
+      'Disallow: /account',
+      'Disallow: /login',
+      'Disallow: /register',
+      'Disallow: /play',
+      'Disallow: /play360',
+      '',
+      `Sitemap: ${buildAbsoluteAppUrl('/sitemap.xml')}`
+    ].join('\n')
+  );
+});
+
+app.get('/sitemap.xml', (_req, res) => {
+  const urls = ['/', '/leaderboard', '/duel'];
+  const now = new Date().toISOString();
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls
+  .map((url) => `  <url><loc>${buildAbsoluteAppUrl(url)}</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>${url === '/' ? '1.0' : '0.8'}</priority></url>`)
+  .join('\n')}
+</urlset>`;
+
+  res.type('application/xml').send(xml);
+});
+
+app.get('/api/external/weather-hint', externalApiRateLimit, async (req, res) => {
   try {
-    const floors = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors ORDER BY building, level').all();
-    res.json(floors);
+    const city = (req.query.city || 'Moscow').toString().trim().slice(0, 64);
+    const data = await getWeatherHint(city || 'Moscow');
+    if (!data) {
+      return res.status(200).json({ data: null, fallback: true });
+    }
+    return res.status(200).json({ data, fallback: false });
+  } catch (error) {
+    console.error('External weather API failed:', error?.message || error);
+    return res.status(503).json({ error: 'External API unavailable', data: null, fallback: true });
+  }
+});
+
+// Floors
+app.get('/api/floors', async (req, res) => {
+  try {
+    const page = parsePositiveInt(req.query.page, 1, 1, 10000);
+    const pageSize = parsePositiveInt(req.query.pageSize, 20, 1, 100);
+    const search = (req.query.search || '').toString().trim();
+    const building = (req.query.building || '').toString().trim();
+    const level = (req.query.level || '').toString().trim();
+    const sortBy = ['name', 'building', 'level', 'id'].includes(req.query.sortBy) ? req.query.sortBy : 'id';
+    const sortDir = parseSortDir(req.query.sortDir, 'desc');
+
+    const where = [];
+    const params = [];
+    if (search) {
+      where.push('(name LIKE ? OR building LIKE ? OR level LIKE ?)');
+      const q = `%${search}%`;
+      params.push(q, q, q);
+    }
+    if (building) {
+      where.push('building = ?');
+      params.push(building);
+    }
+    if (level) {
+      where.push('level = ?');
+      params.push(level);
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const total = db.prepare(`SELECT COUNT(*) as count FROM floors ${whereSql}`).get(...params).count;
+    const offset = (page - 1) * pageSize;
+    const floors = db.prepare(`
+      SELECT id, name, building, level, image_path, width_px, height_px
+      FROM floors
+      ${whereSql}
+      ORDER BY ${sortBy} ${sortDir}
+      LIMIT ? OFFSET ?
+    `).all(...params, pageSize, offset);
+    const signedItems = await Promise.all(floors.map((row) => signRowImage(row)));
+    res.json(toPaginatedResponse(signedItems, total, page, pageSize));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to list floors' });
   }
 });
 
-app.get('/api/floors/:id', (req, res) => {
+app.get('/api/floors/:id', async (req, res) => {
   try {
     const floor = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors WHERE id = ?').get(req.params.id);
     if (!floor) return res.status(404).json({ error: 'Not found' });
-    res.json(floor);
+    res.json(await signRowImage(floor));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to get floor' });
@@ -151,7 +269,14 @@ app.get('/api/floors/:id', (req, res) => {
 app.post('/api/floors', requireAuth, requirePermission('floors.create'), upload.single('image'), async (req, res) => {
   try {
     const { name, building, level } = req.body;
-    if (!req.file) return res.status(400).json({ error: 'Image required' });
+    const validBuilding = validateRequiredTextField(building, 'building', 50);
+    if (validBuilding) return res.status(400).json({ error: validBuilding });
+    const validLevel = validateRequiredTextField(level, 'level', 50);
+    if (validLevel) return res.status(400).json({ error: validLevel });
+    const imageValidation = ensureImageFileOrThrow(req.file);
+    if (!imageValidation.ok) return res.status(imageValidation.status).json({ error: imageValidation.error });
+    const duplicate = db.prepare('SELECT id FROM floors WHERE building = ? AND level = ?').get(building.trim(), level.trim());
+    if (duplicate) return res.status(409).json({ error: 'Floor already exists for this building and level' });
     
     // Get image dimensions from buffer
     const size = imageSize(req.file.buffer);
@@ -165,35 +290,112 @@ app.post('/api/floors', requireAuth, requirePermission('floors.create'), upload.
     const imageUrl = await uploadFile(req.file.buffer, objectName, req.file.mimetype);
     
     const stmt = db.prepare('INSERT INTO floors (name, building, level, image_path, width_px, height_px) VALUES (?, ?, ?, ?, ?, ?)');
-    const info = stmt.run(name || null, building || null, level || null, imageUrl, width, height);
+    const info = stmt.run(name?.trim() || null, building.trim(), level.trim(), imageUrl, width, height);
     const created = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors WHERE id = ?').get(info.lastInsertRowid);
-    res.status(201).json(created);
+    res.status(201).json(await signRowImage(created));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create floor' });
   }
 });
 
+app.put('/api/floors/:id', requireAuth, requirePermission('floors.create'), upload.single('image'), async (req, res) => {
+  try {
+    const floorId = Number(req.params.id);
+    if (!Number.isFinite(floorId)) return res.status(400).json({ error: 'Invalid floor id' });
+    const current = db.prepare('SELECT * FROM floors WHERE id = ?').get(floorId);
+    if (!current) return res.status(404).json({ error: 'Floor not found' });
+
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : current.name;
+    const building = typeof req.body.building === 'string' ? req.body.building.trim() : current.building;
+    const level = typeof req.body.level === 'string' ? req.body.level.trim() : current.level;
+    const validBuilding = validateRequiredTextField(building, 'building', 50);
+    if (validBuilding) return res.status(400).json({ error: validBuilding });
+    const validLevel = validateRequiredTextField(level, 'level', 50);
+    if (validLevel) return res.status(400).json({ error: validLevel });
+
+    const duplicate = db.prepare('SELECT id FROM floors WHERE building = ? AND level = ? AND id <> ?').get(building, level, floorId);
+    if (duplicate) return res.status(409).json({ error: 'Floor already exists for this building and level' });
+
+    let imagePath = current.image_path;
+    let width = current.width_px;
+    let height = current.height_px;
+    if (req.file) {
+      const imageValidation = ensureImageFileOrThrow(req.file);
+      if (!imageValidation.ok) return res.status(imageValidation.status).json({ error: imageValidation.error });
+      const oldObjectName = getObjectNameFromUrl(current.image_path);
+      const size = imageSize(req.file.buffer);
+      width = size.width || 0;
+      height = size.height || 0;
+      const ext = path.extname(req.file.originalname) || '.png';
+      const objectName = `floors/floor_${Date.now()}${ext}`;
+      imagePath = await uploadFile(req.file.buffer, objectName, req.file.mimetype);
+      if (oldObjectName) {
+        try { await deleteFile(oldObjectName); } catch (error) { console.warn('Failed to remove old floor image', error); }
+      }
+    }
+
+    db.prepare(`
+      UPDATE floors
+      SET name = ?, building = ?, level = ?, image_path = ?, width_px = ?, height_px = ?
+      WHERE id = ?
+    `).run(name || null, building, level, imagePath, width, height, floorId);
+    const updated = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors WHERE id = ?').get(floorId);
+    res.json(await signRowImage(updated));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update floor' });
+  }
+});
+
 // Locations
-app.get('/api/locations', (req, res) => {
+app.get('/api/locations', async (req, res) => {
   try {
     const { mode } = req.query;
     const is360Mode = mode === '360';
+    const page = parsePositiveInt(req.query.page, 1, 1, 10000);
+    const pageSize = parsePositiveInt(req.query.pageSize, 20, 1, 100);
+    const search = (req.query.search || '').toString().trim();
+    const floorId = parsePositiveInt(req.query.floorId, 0, 0, 1000000);
+    const sortBy = ['id', 'name', 'building', 'level'].includes(req.query.sortBy) ? req.query.sortBy : 'id';
+    const sortDir = parseSortDir(req.query.sortDir, 'desc');
+
+    const where = ['l.is_360 = ?'];
+    const params = [is360Mode ? 1 : 0];
+    if (search) {
+      where.push('(l.name LIKE ? OR l.hint LIKE ? OR f.building LIKE ? OR f.level LIKE ?)');
+      const q = `%${search}%`;
+      params.push(q, q, q, q);
+    }
+    if (floorId > 0) {
+      where.push('l.floor_id = ?');
+      params.push(floorId);
+    }
+    const whereSql = `WHERE ${where.join(' AND ')}`;
+    const total = db.prepare(`
+      SELECT COUNT(*) as count
+      FROM locations l
+      LEFT JOIN floors f ON l.floor_id = f.id
+      ${whereSql}
+    `).get(...params).count;
+    const offset = (page - 1) * pageSize;
     const rows = db.prepare(`
       SELECT l.*, f.building, f.level 
       FROM locations l 
       LEFT JOIN floors f ON l.floor_id = f.id
-      WHERE l.is_360 = ?
-      ORDER BY l.id DESC
-    `).all(is360Mode ? 1 : 0);
-    res.json(rows);
+      ${whereSql}
+      ORDER BY ${sortBy === 'building' || sortBy === 'level' ? `f.${sortBy}` : `l.${sortBy}`} ${sortDir}
+      LIMIT ? OFFSET ?
+    `).all(...params, pageSize, offset);
+    const signedItems = await Promise.all(rows.map((row) => signRowImage(row)));
+    res.json(toPaginatedResponse(signedItems, total, page, pageSize));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to list locations' });
   }
 });
 
-app.get('/api/locations/random', (req, res) => {
+app.get('/api/locations/random', async (req, res) => {
   try {
     const { floor_id, exclude, mode } = req.query;
     const is360Mode = mode === '360' ? 1 : 0;
@@ -224,9 +426,11 @@ app.get('/api/locations/random', (req, res) => {
     if (!row) return res.status(404).json({ error: 'No locations available' });
     // Minimal data for game (hide exact coordinates)
     const floor = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors WHERE id = ?').get(row.floor_id);
+    const signedLocation = await signRowImage(row);
+    const signedFloor = await signRowImage(floor);
     res.json({
-      location: { id: row.id, floor_id: row.floor_id, image_path: row.image_path, hint: row.hint || null, is_360: row.is_360 === 1 },
-      floor
+      location: { id: row.id, floor_id: row.floor_id, image_path: signedLocation.image_path, hint: row.hint || null, is_360: row.is_360 === 1 },
+      floor: signedFloor
     });
   } catch (err) {
     console.error(err);
@@ -237,7 +441,8 @@ app.get('/api/locations/random', (req, res) => {
 app.post('/api/locations', requireAuth, requirePermission('locations.create'), upload.single('image'), async (req, res) => {
   try {
     const { floor_id, name, x, y, hint, is_360 } = req.body;
-    if (!req.file) return res.status(400).json({ error: 'Image required' });
+    const imageValidation = ensureImageFileOrThrow(req.file);
+    if (!imageValidation.ok) return res.status(imageValidation.status).json({ error: imageValidation.error });
     const f = db.prepare('SELECT id FROM floors WHERE id = ?').get(floor_id);
     if (!f) return res.status(400).json({ error: 'Invalid floor_id' });
     const xNum = Math.round(Number(x));
@@ -245,9 +450,8 @@ app.post('/api/locations', requireAuth, requirePermission('locations.create'), u
     if (!Number.isFinite(xNum) || !Number.isFinite(yNum)) return res.status(400).json({ error: 'Bad coordinates' });
     
     const is360Flag = Number(is_360) === 1 ? 1 : 0;
-    if (is360Flag === 1 && !(req.file.mimetype || '').startsWith('image/')) {
-      return res.status(400).json({ error: '360 location must be an image file' });
-    }
+    const duplicate = db.prepare('SELECT id FROM locations WHERE floor_id = ? AND x = ? AND y = ? AND is_360 = ?').get(floor_id, xNum, yNum, is360Flag);
+    if (duplicate) return res.status(409).json({ error: 'Location with same coordinates already exists' });
 
     // Generate filename and upload to MinIO
     const timestamp = Date.now();
@@ -259,10 +463,64 @@ app.post('/api/locations', requireAuth, requirePermission('locations.create'), u
     const stmt = db.prepare('INSERT INTO locations (floor_id, name, x, y, image_path, is_360, hint) VALUES (?, ?, ?, ?, ?, ?, ?)');
     const info = stmt.run(floor_id, name || null, xNum, yNum, imageUrl, is360Flag, hint || null);
     const created = db.prepare('SELECT id, floor_id, name, x, y, image_path, is_360, hint FROM locations WHERE id = ?').get(info.lastInsertRowid);
-    res.status(201).json(created);
+    res.status(201).json(await signRowImage(created));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create location' });
+  }
+});
+
+app.put('/api/locations/:id', requireAuth, requirePermission('locations.create'), upload.single('image'), async (req, res) => {
+  try {
+    const locationId = Number(req.params.id);
+    if (!Number.isFinite(locationId)) return res.status(400).json({ error: 'Invalid location id' });
+    const current = db.prepare('SELECT * FROM locations WHERE id = ?').get(locationId);
+    if (!current) return res.status(404).json({ error: 'Location not found' });
+
+    const floorId = req.body.floor_id ? Number(req.body.floor_id) : current.floor_id;
+    const xNum = req.body.x !== undefined ? Math.round(Number(req.body.x)) : current.x;
+    const yNum = req.body.y !== undefined ? Math.round(Number(req.body.y)) : current.y;
+    if (!Number.isFinite(xNum) || !Number.isFinite(yNum)) return res.status(400).json({ error: 'Bad coordinates' });
+    const is360Flag = req.body.is_360 !== undefined ? (Number(req.body.is_360) === 1 ? 1 : 0) : current.is_360;
+    const floorExists = db.prepare('SELECT id FROM floors WHERE id = ?').get(floorId);
+    if (!floorExists) return res.status(400).json({ error: 'Invalid floor_id' });
+    const duplicate = db.prepare('SELECT id FROM locations WHERE floor_id = ? AND x = ? AND y = ? AND is_360 = ? AND id <> ?')
+      .get(floorId, xNum, yNum, is360Flag, locationId);
+    if (duplicate) return res.status(409).json({ error: 'Location with same coordinates already exists' });
+
+    let imagePath = current.image_path;
+    if (req.file) {
+      const imageValidation = ensureImageFileOrThrow(req.file);
+      if (!imageValidation.ok) return res.status(imageValidation.status).json({ error: imageValidation.error });
+      const ext = path.extname(req.file.originalname) || '.png';
+      const folder = is360Flag === 1 ? 'locations360' : 'locations';
+      const objectName = `${folder}/loc_${Date.now()}${ext}`;
+      imagePath = await uploadFile(req.file.buffer, objectName, req.file.mimetype);
+      const oldObjectName = getObjectNameFromUrl(current.image_path);
+      if (oldObjectName) {
+        try { await deleteFile(oldObjectName); } catch (error) { console.warn('Failed to remove old location image', error); }
+      }
+    }
+
+    db.prepare(`
+      UPDATE locations
+      SET floor_id = ?, name = ?, x = ?, y = ?, image_path = ?, is_360 = ?, hint = ?
+      WHERE id = ?
+    `).run(
+      floorId,
+      typeof req.body.name === 'string' ? req.body.name.trim() || null : current.name,
+      xNum,
+      yNum,
+      imagePath,
+      is360Flag,
+      typeof req.body.hint === 'string' ? req.body.hint.trim() || null : current.hint,
+      locationId
+    );
+    const updated = db.prepare('SELECT id, floor_id, name, x, y, image_path, is_360, hint FROM locations WHERE id = ?').get(locationId);
+    res.json(await signRowImage(updated));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update location' });
   }
 });
 
@@ -270,12 +528,15 @@ app.post('/api/locations', requireAuth, requirePermission('locations.create'), u
 app.delete('/api/floors/:id', requireAuth, requirePermission('floors.delete'), async (req, res) => {
   try {
     const { id } = req.params;
+    const warnings = [];
     
     // Get floor to delete its image from MinIO
     const floor = db.prepare('SELECT image_path FROM floors WHERE id = ?').get(id);
     if (floor && floor.image_path) {
       const objectName = getObjectNameFromUrl(floor.image_path);
-      if (objectName) await deleteFile(objectName);
+      if (objectName) {
+        try { await deleteFile(objectName); } catch (error) { warnings.push(`Failed to delete floor image ${objectName}`); }
+      }
     }
     
     // Get all locations for this floor to delete their images
@@ -283,7 +544,9 @@ app.delete('/api/floors/:id', requireAuth, requirePermission('floors.delete'), a
     for (const loc of locations) {
       if (loc.image_path) {
         const objectName = getObjectNameFromUrl(loc.image_path);
-        if (objectName) await deleteFile(objectName);
+        if (objectName) {
+          try { await deleteFile(objectName); } catch (error) { warnings.push(`Failed to delete location image ${objectName}`); }
+        }
       }
     }
     
@@ -293,7 +556,7 @@ app.delete('/api/floors/:id', requireAuth, requirePermission('floors.delete'), a
     // Delete the floor
     db.prepare('DELETE FROM floors WHERE id = ?').run(id);
     
-    res.json({ success: true, message: 'Floor and associated locations deleted' });
+    res.json({ success: true, message: 'Floor and associated locations deleted', warnings });
   } catch (err) {
     console.error('Error deleting floor:', err);
     res.status(500).json({ error: 'Failed to delete floor' });
@@ -304,16 +567,19 @@ app.delete('/api/floors/:id', requireAuth, requirePermission('floors.delete'), a
 app.delete('/api/locations/:id', requireAuth, requirePermission('locations.delete'), async (req, res) => {
   try {
     const { id } = req.params;
+    const warnings = [];
     
     // Get location to delete its image from MinIO
     const location = db.prepare('SELECT image_path FROM locations WHERE id = ?').get(id);
     if (location && location.image_path) {
       const objectName = getObjectNameFromUrl(location.image_path);
-      if (objectName) await deleteFile(objectName);
+      if (objectName) {
+        try { await deleteFile(objectName); } catch (error) { warnings.push(`Failed to delete image ${objectName}`); }
+      }
     }
     
     db.prepare('DELETE FROM locations WHERE id = ?').run(id);
-    res.json({ success: true, message: 'Location deleted' });
+    res.json({ success: true, message: 'Location deleted', warnings });
   } catch (err) {
     console.error('Error deleting location:', err);
     res.status(500).json({ error: 'Failed to delete location' });
@@ -365,79 +631,7 @@ app.post('/api/guess', (req, res) => {
   }
 });
 
-// Auth Routes
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { first_name, last_name, email, password } = req.body;
-    if (!first_name || !last_name || !email || !password) {
-      return res.status(400).json({ error: 'All fields required' });
-    }
-
-    // Check if user exists
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-    if (existing) {
-      return res.status(400).json({ error: 'Email already registered' });
-    }
-
-    // Hash password
-    const password_hash = await bcrypt.hash(password, 10);
-
-    // Create user
-    const stmt = db.prepare('INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)');
-    const info = stmt.run(first_name, last_name, email, password_hash);
-    
-    const user = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users WHERE id = ?').get(info.lastInsertRowid);
-    assignRoleByNameStmt.run(user.id, 'player');
-    
-    req.session.userId = user.id;
-    res.status(201).json({ user: buildUserWithAccess(user) });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to register' });
-  }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
-    }
-
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    req.session.userId = user.id;
-    res.json({
-      user: buildUserWithAccess({
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-        avatar_url: user.avatar_url
-      })
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to login' });
-  }
-});
-
-app.get('/api/auth/me', requireAuth, (req, res) => {
-  res.json(buildUserWithAccess(req.auth.user));
-});
-
-app.post('/api/auth/logout', (req, res) => {
-  req.session.destroy();
-  res.json({ ok: true });
-});
+app.use('/api/auth', createAuthRouter());
 
 // User management
 app.put('/api/users/:id', requireAuth, async (req, res) => {
@@ -519,16 +713,43 @@ app.post('/api/game-results', requireAuth, requirePermission('results.create'), 
 });
 
 // Leaderboard
-app.get('/api/leaderboard', (req, res, next) => {
-  if (!req.session.userId) return next();
-  return requireAuth(req, res, next);
-}, (req, res, next) => {
-  if (!req.session.userId) return next();
+app.get('/api/leaderboard', attachAuthIfPresent, (req, res, next) => {
+  if (!req.auth) return next();
   return requirePermission('leaderboard.read')(req, res, next);
 }, (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
-    // Используем подзапрос для корректной работы RANK() с GROUP BY
+    const page = parsePositiveInt(req.query.page, 1, 1, 10000);
+    const pageSize = parsePositiveInt(req.query.pageSize, parsePositiveInt(req.query.limit, 10, 1, 100), 1, 100);
+    const search = (req.query.search || '').toString().trim();
+    const minScore = Number.isFinite(Number(req.query.minScore)) ? Number(req.query.minScore) : null;
+    const sortBy = ['score', 'name', 'played_at'].includes(req.query.sortBy) ? req.query.sortBy : 'score';
+    const sortDir = parseSortDir(req.query.sortDir, 'desc');
+    const where = [];
+    const params = [];
+    if (search) {
+      where.push('name LIKE ?');
+      params.push(`%${search}%`);
+    }
+    if (minScore !== null) {
+      where.push('score >= ?');
+      params.push(minScore);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const total = db.prepare(`
+      SELECT COUNT(*) as count
+      FROM (
+        SELECT
+          gr.user_id,
+          u.first_name || ' ' || u.last_name as name,
+          MAX(gr.total_score) as score,
+          MAX(gr.played_at) as played_at
+        FROM game_results gr
+        JOIN users u ON gr.user_id = u.id
+        GROUP BY gr.user_id
+      ) t
+      ${whereSql}
+    `).get(...params).count;
+    const offset = (page - 1) * pageSize;
     const results = db.prepare(`
       SELECT 
         user_id,
@@ -545,12 +766,12 @@ app.get('/api/leaderboard', (req, res, next) => {
         FROM game_results gr
         JOIN users u ON gr.user_id = u.id
         GROUP BY gr.user_id
-      )
-      ORDER BY score DESC
-      LIMIT ?
-    `).all(limit);
-
-    res.json(results);
+      ) t
+      ${whereSql}
+      ORDER BY ${sortBy} ${sortDir}
+      LIMIT ? OFFSET ?
+    `).all(...params, pageSize, offset);
+    res.json(toPaginatedResponse(results, total, page, pageSize));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to get leaderboard' });
@@ -591,12 +812,38 @@ app.post('/api/users/:id/avatar', requireAuth, upload.single('avatar'), async (r
 
 app.get('/api/admin/users', requireAuth, requirePermission('roles.manage'), (req, res) => {
   try {
-    const users = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users ORDER BY id DESC').all();
+    const page = parsePositiveInt(req.query.page, 1, 1, 10000);
+    const pageSize = parsePositiveInt(req.query.pageSize, 20, 1, 100);
+    const search = (req.query.search || '').toString().trim();
+    const role = (req.query.role || '').toString().trim();
+    const sortBy = ['id', 'first_name', 'last_name', 'email'].includes(req.query.sortBy) ? req.query.sortBy : 'id';
+    const sortDir = parseSortDir(req.query.sortDir, 'desc');
+    const where = [];
+    const params = [];
+    if (search) {
+      where.push('(u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)');
+      const q = `%${search}%`;
+      params.push(q, q, q);
+    }
+    if (role) {
+      where.push('EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = ?)');
+      params.push(role);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const total = db.prepare(`SELECT COUNT(*) as count FROM users u ${whereSql}`).get(...params).count;
+    const offset = (page - 1) * pageSize;
+    const users = db.prepare(`
+      SELECT u.id, u.first_name, u.last_name, u.email, u.avatar_url
+      FROM users u
+      ${whereSql}
+      ORDER BY u.${sortBy} ${sortDir}
+      LIMIT ? OFFSET ?
+    `).all(...params, pageSize, offset);
     const withRoles = users.map((user) => ({
       ...user,
       roles: getUserRoles(user.id)
     }));
-    res.json(withRoles);
+    res.json(toPaginatedResponse(withRoles, total, page, pageSize));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to list users' });
@@ -997,6 +1244,16 @@ io.on('connection', (socket) => {
       currentRoomCode = null;
     }
   });
+});
+
+app.use((err, _req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: `File is too large. Max ${Math.round(MAX_UPLOAD_SIZE_BYTES / 1024 / 1024)}MB` });
+    }
+    return res.status(400).json({ error: err.message });
+  }
+  return next(err);
 });
 
 // Serve static files from client build in production

@@ -1,14 +1,15 @@
-import React, { useState } from 'react'
+import React, { Suspense, lazy, useMemo, useState } from 'react'
 import { useAuth, useNavigation } from '../shared/hooks'
-import { gameApi } from '../shared/api'
 import HomePage from '../pages/HomePage'
 import LoginPage from '../pages/LoginPage'
 import RegistrationPage from '../pages/RegistrationPage'
 import AccountPage from '../pages/AccountPage'
-import Play from '../pages/Play'
-import Admin from '../pages/Admin'
+import { SeoHead, buildSeoConfig } from '../shared/seo/SeoHead'
 import LeaderboardPage from '../pages/LeaderboardPage'
-import DuelPage from '../pages/DuelPage'
+
+const Play = lazy(() => import('../pages/Play'))
+const Admin = lazy(() => import('../pages/Admin'))
+const DuelPage = lazy(() => import('../pages/DuelPage'))
 
 export default function App() {
   const { user, login, register, logout, updateUser, can } = useAuth()
@@ -29,6 +30,7 @@ export default function App() {
   const [gameRank, setGameRank] = useState<number | null>(null)
   const [isNewRecord, setIsNewRecord] = useState<boolean>(false)
   const [previousBest, setPreviousBest] = useState<number | null>(null)
+  const seoConfig = useMemo(() => buildSeoConfig(currentPage, Boolean(user)), [currentPage, user])
 
   async function handleLogin(email: string, password: string) {
     try {
@@ -48,9 +50,12 @@ export default function App() {
     }
   }
 
-  function handleLogout() {
-    logout()
-    navigateToHome()
+  async function handleLogout() {
+    try {
+      await logout()
+    } finally {
+      navigateToHome()
+    }
   }
 
   async function handleGameComplete(score: number, rank?: number, newRecord?: boolean, prevBest?: number) {
@@ -71,9 +76,11 @@ export default function App() {
 
   return (
     <>
+      <SeoHead config={seoConfig} />
       {currentPage === 'home' && (
         <HomePage
           user={user}
+          onNavigateToHome={navigateToHome}
           onStartGame={navigateToPlay}
           onNavigateToLogin={navigateToLogin}
           onNavigateToRegister={navigateToRegister}
@@ -110,26 +117,34 @@ export default function App() {
       )}
 
       {currentPage === 'play' && (
-        <Play
-          onGameComplete={handleGameComplete}
-          user={user}
-          onNavigateToAccount={navigateToAccount}
-          onLogout={handleLogout}
-        />
+        <Suspense fallback={null}>
+          <Play
+            onGameComplete={handleGameComplete}
+            user={user}
+            onNavigateToHome={navigateToHome}
+            onNavigateToAccount={navigateToAccount}
+            onLogout={handleLogout}
+          />
+        </Suspense>
       )}
 
       {currentPage === 'play360' && (
-        <Play
-          mode="360"
-          onGameComplete={handleGameComplete}
-          user={user}
-          onNavigateToAccount={navigateToAccount}
-          onLogout={handleLogout}
-        />
+        <Suspense fallback={null}>
+          <Play
+            mode="360"
+            onGameComplete={handleGameComplete}
+            user={user}
+            onNavigateToHome={navigateToHome}
+            onNavigateToAccount={navigateToAccount}
+            onLogout={handleLogout}
+          />
+        </Suspense>
       )}
 
       {currentPage === 'admin' && (can('floors.create') || can('locations.create') || can('roles.manage')) && (
-        <Admin />
+        <Suspense fallback={null}>
+          <Admin />
+        </Suspense>
       )}
 
       {currentPage === 'leaderboard' && (
@@ -140,17 +155,20 @@ export default function App() {
           isNewRecord={isNewRecord}
           previousBest={previousBest || undefined}
           onPlayAgain={handlePlayAgain}
+          onNavigateToHome={navigateToHome}
           onNavigateToAccount={navigateToAccount}
           onLogout={handleLogout}
         />
       )}
 
       {currentPage === 'duel' && (
-        <DuelPage
-          user={user}
-          onNavigateToHome={navigateToHome}
-          onNavigateToLogin={navigateToLogin}
-        />
+        <Suspense fallback={null}>
+          <DuelPage
+            user={user}
+            onNavigateToHome={navigateToHome}
+            onNavigateToLogin={navigateToLogin}
+          />
+        </Suspense>
       )}
     </>
   )

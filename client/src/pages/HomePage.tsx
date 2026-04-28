@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './HomePage.css'
 import RulesPage from './RulesPage'
-import ProfileMenu from '../components/ProfileMenu'
+import { ProfileMenu } from '../shared/ui'
+import { getDailyWeatherHint, type WeatherHintData } from '../shared/api'
 
 interface HomePageProps {
   user: any
+  onNavigateToHome: () => void
   onStartGame: () => void
   onNavigateToLogin: () => void
   onNavigateToRegister: () => void
@@ -18,6 +20,7 @@ interface HomePageProps {
 
 export default function HomePage({ 
   user, 
+  onNavigateToHome,
   onStartGame, 
   onNavigateToLogin, 
   onNavigateToRegister,
@@ -29,18 +32,46 @@ export default function HomePage({
   canAccessAdmin
 }: HomePageProps) {
   const [showRules, setShowRules] = useState(false)
+  const [hint, setHint] = useState<WeatherHintData | null>(null)
+  const [hintStatus, setHintStatus] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading')
+
+  useEffect(() => {
+    let isMounted = true
+    setHintStatus('loading')
+
+    getDailyWeatherHint('Moscow')
+      .then((value) => {
+        if (!isMounted) return
+        if (value) {
+          setHint(value)
+          setHintStatus('ready')
+          return
+        }
+        setHint(null)
+        setHintStatus('empty')
+      })
+      .catch(() => {
+        if (!isMounted) return
+        setHint(null)
+        setHintStatus('error')
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   return (
     <>
-      <div className="home-page">
+      <main className="home-page">
         <div className="home-background">
           <div className="home-circle home-circle-1"></div>
           <div className="home-circle home-circle-2"></div>
           <div className="home-circle home-circle-3"></div>
         </div>
 
-        <div className="home-header">
-        <div className="home-logo">
+        <header className="home-header">
+        <div className="home-logo" onClick={onNavigateToHome}>
           <img src="/mtuci-logo-darkblue.svg" alt="MTUCI" className="home-logo-icon" />
           <h1 className="home-logo-text">MTUCI Guesser</h1>
         </div>
@@ -48,6 +79,7 @@ export default function HomePage({
           <div className="home-auth-buttons">
             {user ? (
               <ProfileMenu 
+                avatarUrl={user?.avatar_url}
                 onNavigateToAccount={onNavigateToAccount}
                 onLogout={onLogout}
               />
@@ -62,10 +94,10 @@ export default function HomePage({
               </>
             )}
           </div>
-        </div>
+        </header>
 
-        <div className="home-content">
-          <div className="home-actions">
+        <section className="home-content" aria-label="Игровые действия">
+          <nav className="home-actions" aria-label="Навигация по режимам">
             <button className="home-start-btn" onClick={onStartGame}>
               Начать игру
             </button>
@@ -78,7 +110,26 @@ export default function HomePage({
             <button className="home-rules-btn" onClick={() => setShowRules(true)}>
               ?
             </button>
-          </div>
+          </nav>
+
+          <aside className="home-weather-widget" aria-live="polite">
+            <h2 className="home-weather-title">Подсказка дня</h2>
+            {hintStatus === 'loading' && <p className="home-weather-text">Загрузка внешних данных...</p>}
+            {hintStatus === 'ready' && hint && (
+              <>
+                <p className="home-weather-text">
+                  {hint.city}: {hint.temperatureCelsius}°C, {hint.weather}
+                </p>
+                <p className="home-weather-tip">{hint.recommendation}</p>
+              </>
+            )}
+            {hintStatus === 'empty' && (
+              <p className="home-weather-text">Внешний сервис не вернул данные. Игра работает в штатном режиме.</p>
+            )}
+            {hintStatus === 'error' && (
+              <p className="home-weather-text">Сервис временно недоступен. Используйте встроенные подсказки в игре.</p>
+            )}
+          </aside>
           
           {canAccessAdmin && (
             <button 
@@ -88,8 +139,8 @@ export default function HomePage({
               Админ панель
             </button>
           )}
-        </div>
-      </div>
+        </section>
+      </main>
 
       {showRules && <RulesPage onClose={() => setShowRules(false)} />}
     </>

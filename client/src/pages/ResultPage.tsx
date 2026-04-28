@@ -13,6 +13,7 @@ interface ResultPageProps {
   floorWidth: number
   floorHeight: number
   onNext: () => void
+  onNavigateToHome?: () => void
   user?: any
   onNavigateToAccount?: () => void
   onLogout?: () => void
@@ -29,6 +30,7 @@ export default function ResultPage({
   floorWidth,
   floorHeight,
   onNext,
+  onNavigateToHome,
   user,
   onNavigateToAccount,
   onLogout
@@ -36,13 +38,14 @@ export default function ResultPage({
   return (
     <div className="result-page">
       <header className="result-header">
-        <div className="result-logo">
+        <div className="result-logo" onClick={onNavigateToHome} style={{ cursor: onNavigateToHome ? 'pointer' : 'default' }}>
           <img src="/mtuci-logo-white.svg" alt="MTUCI" className="result-logo-icon" />
           <h1 className="result-logo-text">MTUCI Guesser</h1>
         </div>
         {user && onNavigateToAccount && onLogout ? (
           <ProfileMenu 
             variant="light"
+            avatarUrl={user?.avatar_url}
             onNavigateToAccount={onNavigateToAccount}
             onLogout={onLogout}
           />

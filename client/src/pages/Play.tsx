@@ -9,12 +9,13 @@ import PanoramaViewer from '../components/PanoramaViewer'
 interface PlayProps {
   onGameComplete: (score: number, rank?: number, isNewRecord?: boolean, previousBest?: number) => void
   user: any
+  onNavigateToHome: () => void
   onNavigateToAccount: () => void
   onLogout: () => void
   mode?: 'classic' | '360'
 }
 
-export default function Play({ onGameComplete, user, onNavigateToAccount, onLogout, mode = 'classic' }: PlayProps) {
+export default function Play({ onGameComplete, user, onNavigateToHome, onNavigateToAccount, onLogout, mode = 'classic' }: PlayProps) {
   const game = useGame(mode)
   const {
     floors,
@@ -201,6 +202,7 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
         floorWidth={currentFloor.width_px}
         floorHeight={currentFloor.height_px}
         onNext={nextLocation}
+        onNavigateToHome={onNavigateToHome}
         user={user}
         onNavigateToAccount={onNavigateToAccount}
         onLogout={onLogout}
@@ -211,13 +213,14 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
   return (
     <div className="play-page">
       <header className="play-header">
-        <div className="play-logo">
+        <div className="play-logo" onClick={onNavigateToHome} style={{ cursor: 'pointer' }}>
           <img src="/mtuci-logo-white.svg" alt="MTUCI" className="play-logo-icon" />
           <h1 className="play-logo-text">MTUCI Guesser</h1>
         </div>
         {user ? (
           <ProfileMenu 
             variant="light"
+            avatarUrl={user?.avatar_url}
             onNavigateToAccount={onNavigateToAccount}
             onLogout={onLogout}
           />

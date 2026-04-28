@@ -53,7 +53,7 @@
 .home-header {
   position: relative;
   padding: 80px 100px 0;
-  z-index: 10;
+  z-index: 30;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -84,6 +84,8 @@
 }
 
 .home-auth-buttons {
+  position: relative;
+  z-index: 40;
   display: flex;
   gap: 20px;
   align-items: center;
@@ -273,6 +275,38 @@
   color: #FFFFFF;
 }
 
+.home-weather-widget {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  max-width: 360px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(55, 37, 121, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(55, 37, 121, 0.14);
+  z-index: 20;
+}
+
+.home-weather-title {
+  margin: 0 0 6px;
+  color: #372579;
+  font-size: 18px;
+  line-height: 22px;
+}
+
+.home-weather-text,
+.home-weather-tip {
+  margin: 0;
+  color: #2c2c2c;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.home-weather-tip {
+  margin-top: 4px;
+}
+
 /* Планшеты */
 @media (max-width: 1024px) {
   .home-header {
@@ -380,6 +414,12 @@
   .home-admin-link {
     font-size: 16px;
     padding: 8px 16px;
+  }
+
+  .home-weather-widget {
+    position: static;
+    max-width: 100%;
+    margin-top: 14px;
   }
 
   /* Уменьшаем размытые круги на мобильных */

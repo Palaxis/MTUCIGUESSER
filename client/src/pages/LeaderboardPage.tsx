@@ -14,21 +14,45 @@ interface LeaderboardPageProps {
   isNewRecord?: boolean
   previousBest?: number
   onPlayAgain: () => void
+  onNavigateToHome: () => void
   onNavigateToAccount?: () => void
   onLogout?: () => void
 }
 
-export default function LeaderboardPage({ user, userScore, userRank, isNewRecord, previousBest, onPlayAgain, onNavigateToAccount, onLogout }: LeaderboardPageProps) {
+export default function LeaderboardPage({ user, userScore, userRank, isNewRecord, previousBest, onPlayAgain, onNavigateToHome, onNavigateToAccount, onLogout }: LeaderboardPageProps) {
+  const initialParams = new URLSearchParams(window.location.search)
   const [players, setPlayers] = useState<Player[]>([])
+  const [total, setTotal] = useState(0)
   const [hypotheticalRank, setHypotheticalRank] = useState<number | null>(null)
+  const [search, setSearch] = useState(initialParams.get('search') || '')
+  const [sortDir, setSortDir] = useState(initialParams.get('sortDir') || 'desc')
+  const [page, setPage] = useState(Number(initialParams.get('page') || 1))
+  const pageSize = 10
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   useEffect(() => {
     loadLeaderboard()
-  }, [user, userScore])
+  }, [user, userScore, search, sortDir, page])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    params.set('search', search)
+    params.set('sortDir', sortDir)
+    params.set('page', String(page))
+    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`)
+  }, [search, sortDir, page])
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   async function loadLeaderboard() {
     try {
-      let leaderboardData = await leaderboardApi.getLeaderboard()
+      const response = await leaderboardApi.getLeaderboard({ search, sortDir, page, pageSize })
+      let leaderboardData = response.items
+      setTotal(response.total)
       
       // Если есть счёт игрока (авторизованный или гость)
       if (userScore !== undefined) {
@@ -67,13 +91,14 @@ export default function LeaderboardPage({ user, userScore, userRank, isNewRecord
   return (
     <div className="leaderboard-page">
       <header className="leaderboard-header">
-        <div className="leaderboard-logo">
+        <div className="leaderboard-logo" onClick={onNavigateToHome}>
           <img src="/mtuci-logo-white.svg" alt="MTUCI" className="leaderboard-logo-icon" />
           <h1 className="leaderboard-logo-text">MTUCI Guesser</h1>
         </div>
         {user && onNavigateToAccount && onLogout ? (
           <ProfileMenu 
             variant="light"
+            avatarUrl={user?.avatar_url}
             onNavigateToAccount={onNavigateToAccount}
             onLogout={onLogout}
           />
@@ -89,6 +114,18 @@ export default function LeaderboardPage({ user, userScore, userRank, isNewRecord
 
       <div className="leaderboard-content">
         <h2 className="leaderboard-title">Таблица результатов</h2>
+        <div className="leaderboard-controls">
+          <input
+            className="leaderboard-control-input"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            placeholder="Поиск игрока..."
+          />
+          <select className="leaderboard-control-select" value={sortDir} onChange={(e) => setSortDir(e.target.value)}>
+            <option value="desc">Сильные сверху</option>
+            <option value="asc">Слабые сверху</option>
+          </select>
+        </div>
 
         <div className="leaderboard-table">
           <div className="leaderboard-row leaderboard-header-row">
@@ -109,6 +146,23 @@ export default function LeaderboardPage({ user, userScore, userRank, isNewRecord
         </div>
 
         <div className="leaderboard-results">
+          <p>Страница {page} / {totalPages}</p>
+          <div className="leaderboard-pagination">
+            <button
+              className="leaderboard-page-btn"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Назад
+            </button>
+            <button
+              className="leaderboard-page-btn"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Вперед
+            </button>
+          </div>
           {userScore && (
             <>
               <h3 className="leaderboard-user-score">

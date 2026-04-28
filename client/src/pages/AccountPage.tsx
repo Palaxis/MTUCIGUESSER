@@ -56,7 +56,7 @@ export default function AccountPage({ user, onLogout, onUpdate, onNavigateToHome
   return (
     <div className="account-page">
       <header className="account-header">
-        <div className="account-logo">
+        <div className="account-logo" onClick={onNavigateToHome} style={{ cursor: 'pointer' }}>
           <img src="/mtuci-logo-white.svg" alt="MTUCI" className="account-logo-icon" />
           <h1 className="account-logo-text">MTUCI Guesser</h1>
         </div>

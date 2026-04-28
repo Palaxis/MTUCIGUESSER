@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, CreateBucketCommand, HeadBucketCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import 'dotenv/config';
 
 const MINIO_ENDPOINT = process.env.MINIO_ENDPOINT || 'localhost';
@@ -21,33 +22,6 @@ const s3Client = new S3Client({
 });
 
 /**
- * Set public read policy for the bucket
- */
-async function setBucketPublicPolicy() {
-  const policy = {
-    Version: '2012-10-17',
-    Statement: [
-      {
-        Effect: 'Allow',
-        Principal: '*',
-        Action: ['s3:GetObject'],
-        Resource: [`arn:aws:s3:::${MINIO_BUCKET}/*`]
-      }
-    ]
-  };
-
-  try {
-    await s3Client.send(new PutBucketPolicyCommand({
-      Bucket: MINIO_BUCKET,
-      Policy: JSON.stringify(policy)
-    }));
-    console.log(`✓ Set public read policy for bucket '${MINIO_BUCKET}'`);
-  } catch (error) {
-    console.error('Failed to set bucket policy:', error);
-  }
-}
-
-/**
  * Initialize storage - create bucket if it doesn't exist
  */
 export async function initializeStorage() {
@@ -55,16 +29,12 @@ export async function initializeStorage() {
     // Check if bucket exists
     await s3Client.send(new HeadBucketCommand({ Bucket: MINIO_BUCKET }));
     console.log(`✓ MinIO bucket '${MINIO_BUCKET}' exists`);
-    // Ensure public policy is set
-    await setBucketPublicPolicy();
   } catch (error) {
     if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
       // Bucket doesn't exist, create it
       try {
         await s3Client.send(new CreateBucketCommand({ Bucket: MINIO_BUCKET }));
         console.log(`✓ Created MinIO bucket '${MINIO_BUCKET}'`);
-        // Set public policy for new bucket
-        await setBucketPublicPolicy();
       } catch (createError) {
         console.error('Failed to create bucket:', createError);
         throw createError;
@@ -99,20 +69,17 @@ export async function uploadFile(buffer, objectName, contentType) {
 }
 
 /**
- * Delete a file from MinIO
+ * Delete a file from MinIO.
+ * Throws so callers can decide whether operation is recoverable.
  * @param {string} objectName - Object name (path in bucket)
  */
 export async function deleteFile(objectName) {
-  try {
-    const command = new DeleteObjectCommand({
-      Bucket: MINIO_BUCKET,
-      Key: objectName,
-    });
-    await s3Client.send(command);
-    console.log(`Deleted: ${objectName}`);
-  } catch (error) {
-    console.error(`Failed to delete ${objectName}:`, error);
-  }
+  const command = new DeleteObjectCommand({
+    Bucket: MINIO_BUCKET,
+    Key: objectName,
+  });
+  await s3Client.send(command);
+  console.log(`Deleted: ${objectName}`);
 }
 
 /**
@@ -151,5 +118,18 @@ export function getBucket() {
 export function getBaseUrl() {
   const protocol = MINIO_USE_SSL ? 'https' : 'http';
   return `${protocol}://${MINIO_ENDPOINT}:${MINIO_PORT}/${MINIO_BUCKET}`;
+}
+
+/**
+ * Build a short-lived signed URL for private object access.
+ * @param {string} objectName
+ * @param {number} expiresInSec
+ */
+export async function getSignedFileUrl(objectName, expiresInSec = 300) {
+  const command = new GetObjectCommand({
+    Bucket: MINIO_BUCKET,
+    Key: objectName
+  });
+  return getSignedUrl(s3Client, command, { expiresIn: expiresInSec });
 }
 

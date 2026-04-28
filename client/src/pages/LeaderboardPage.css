@@ -180,6 +180,70 @@
   margin-top: 40px;
 }
 
+.leaderboard-controls {
+  max-width: 680px;
+  margin: 0 auto 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaderboard-control-input,
+.leaderboard-control-select {
+  height: 44px;
+  border: 2px solid #69647E;
+  border-radius: 22px;
+  padding: 0 16px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 22px;
+  color: #372579;
+  background: #FFFFFF;
+}
+
+.leaderboard-control-input {
+  width: 100%;
+  max-width: 420px;
+}
+
+.leaderboard-control-select {
+  min-width: 210px;
+  cursor: pointer;
+}
+
+.leaderboard-pagination {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.leaderboard-page-btn {
+  width: 170px;
+  height: 44px;
+  background: #372579;
+  border: none;
+  border-radius: 60px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 24px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.leaderboard-page-btn:hover {
+  background: #4a2f99;
+}
+
+.leaderboard-page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .leaderboard-user-score {
   font-family: 'Montserrat', sans-serif;
   font-weight: 600;
@@ -246,6 +310,17 @@
 
   .leaderboard-user-score {
     font-size: 32px;
+  }
+
+  .leaderboard-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .leaderboard-control-input,
+  .leaderboard-control-select {
+    width: 100%;
+    max-width: none;
   }
 }
 
@@ -319,6 +394,11 @@
     max-width: 263px;
     height: 48px;
   }
+
+  .leaderboard-page-btn {
+    width: 140px;
+    font-size: 18px;
+  }
 }
 
 /* Маленькие мобильные */
@@ -366,5 +446,17 @@
   .leaderboard-play-again-btn {
     font-size: 18px;
     height: 44px;
+  }
+
+  .leaderboard-control-input,
+  .leaderboard-control-select {
+    font-size: 16px;
+    height: 40px;
+  }
+
+  .leaderboard-page-btn {
+    width: 120px;
+    height: 40px;
+    font-size: 16px;
   }
 }

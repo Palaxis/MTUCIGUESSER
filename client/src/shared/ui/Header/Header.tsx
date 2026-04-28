@@ -39,6 +39,7 @@ export function Header({
       {user && onNavigateToAccount && onLogout ? (
         <ProfileMenu
           variant={variant}
+          avatarUrl={user?.avatar_url}
           onNavigateToAccount={onNavigateToAccount}
           onLogout={onLogout}
         />

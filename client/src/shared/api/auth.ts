@@ -10,14 +10,19 @@ export interface User {
   permissions?: string[]
 }
 
+export interface AuthResponse {
+  user: User
+  accessToken: string
+}
+
 export const authApi = {
   async me(): Promise<User> {
     const response = await apiClient.get<User>('/api/auth/me')
     return response.data
   },
 
-  async login(email: string, password: string): Promise<{ user: User }> {
-    const response = await apiClient.post<{ user: User }>('/api/auth/login', { email, password })
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>('/api/auth/login', { email, password })
     return response.data
   },
 
@@ -26,13 +31,18 @@ export const authApi = {
     password: string,
     firstName: string,
     lastName: string
-  ): Promise<{ user: User }> {
-    const response = await apiClient.post<{ user: User }>('/api/auth/register', {
+  ): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>('/api/auth/register', {
       email,
       password,
       first_name: firstName,
       last_name: lastName
     })
+    return response.data
+  },
+
+  async refresh(): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>('/api/auth/refresh')
     return response.data
   },
 

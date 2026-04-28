@@ -85,6 +85,19 @@ db.exec(`
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS refresh_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    jti TEXT NOT NULL UNIQUE,
+    token_hash TEXT NOT NULL,
+    expires_at DATETIME NOT NULL,
+    revoked_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    user_agent TEXT,
+    ip TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
   
   CREATE INDEX IF NOT EXISTS idx_game_results_score ON game_results(total_score DESC);
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -92,6 +105,8 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_user_roles_role_id ON user_roles(role_id);
   CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON role_permissions(role_id);
   CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id ON role_permissions(permission_id);
+  CREATE INDEX IF NOT EXISTS idx_refresh_sessions_user_id ON refresh_sessions(user_id);
+  CREATE INDEX IF NOT EXISTS idx_refresh_sessions_jti ON refresh_sessions(jti);
 `);
 
 // Try to add avatar_url column to existing users table

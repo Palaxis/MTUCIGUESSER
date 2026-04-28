@@ -36,8 +36,8 @@ export type GameMode = 'classic' | '360'
 
 export const gameApi = {
   async getFloors(): Promise<Floor[]> {
-    const response = await apiClient.get<Floor[]>('/api/floors')
-    return response.data
+    const response = await apiClient.get<{ items: Floor[] }>('/api/floors', { params: { page: 1, pageSize: 200 } })
+    return response.data.items || []
   },
 
   async getRandomLocation(excludeIds: number[] = [], mode: GameMode = 'classic'): Promise<{ location: LocationForGame }> {

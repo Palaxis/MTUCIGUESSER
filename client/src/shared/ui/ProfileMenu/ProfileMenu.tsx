@@ -7,9 +7,10 @@ export interface ProfileMenuProps {
   onNavigateToAccount: () => void
   onLogout: () => void
   variant?: ProfileMenuVariant
+  avatarUrl?: string | null
 }
 
-export function ProfileMenu({ onNavigateToAccount, onLogout, variant = 'dark' }: ProfileMenuProps) {
+export function ProfileMenu({ onNavigateToAccount, onLogout, variant = 'dark', avatarUrl }: ProfileMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -38,20 +39,24 @@ export function ProfileMenu({ onNavigateToAccount, onLogout, variant = 'dark' }:
   return (
     <div className="profile-menu-container" ref={menuRef}>
       <button className={buttonClasses} onClick={() => setIsOpen(!isOpen)}>
-        <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
-          <circle
-            cx="12.5"
-            cy="8"
-            r="4"
-            stroke={variant === 'light' ? '#FFFFFF' : '#372579'}
-            strokeWidth="2"
-          />
-          <path
-            d="M5 20C5 16 8 13 12.5 13C17 13 20 16 20 20"
-            stroke={variant === 'light' ? '#FFFFFF' : '#372579'}
-            strokeWidth="2"
-          />
-        </svg>
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="Profile" className="profile-menu-avatar" />
+        ) : (
+          <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+            <circle
+              cx="12.5"
+              cy="8"
+              r="4"
+              stroke={variant === 'light' ? '#FFFFFF' : '#372579'}
+              strokeWidth="2"
+            />
+            <path
+              d="M5 20C5 16 8 13 12.5 13C17 13 20 16 20 20"
+              stroke={variant === 'light' ? '#FFFFFF' : '#372579'}
+              strokeWidth="2"
+            />
+          </svg>
+        )}
       </button>
 
       {isOpen && (
