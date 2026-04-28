@@ -12,6 +12,8 @@ interface HomePageProps {
   onLogout: () => void
   onNavigateToAdmin: () => void
   onNavigateToDuel: () => void
+  onStartGame360: () => void
+  canAccessAdmin: boolean
 }
 
 export default function HomePage({ 
@@ -22,7 +24,9 @@ export default function HomePage({
   onNavigateToAccount,
   onLogout,
   onNavigateToAdmin,
-  onNavigateToDuel
+  onNavigateToDuel,
+  onStartGame360,
+  canAccessAdmin
 }: HomePageProps) {
   const [showRules, setShowRules] = useState(false)
 
@@ -68,12 +72,15 @@ export default function HomePage({
             <button className="home-duel-btn" onClick={onNavigateToDuel}>
               ⚔️ Дуэли
             </button>
+            <button className="home-360-btn" onClick={onStartGame360}>
+              360 DEBUG
+            </button>
             <button className="home-rules-btn" onClick={() => setShowRules(true)}>
               ?
             </button>
           </div>
           
-          {user?.email === 'admin@admin.com' && (
+          {canAccessAdmin && (
             <button 
               className="home-admin-link"
               onClick={onNavigateToAdmin}

@@ -11,7 +11,7 @@ import LeaderboardPage from '../pages/LeaderboardPage'
 import DuelPage from '../pages/DuelPage'
 
 export default function App() {
-  const { user, login, register, logout, updateUser } = useAuth()
+  const { user, login, register, logout, updateUser, can } = useAuth()
   const {
     currentPage,
     navigateToHome,
@@ -19,6 +19,7 @@ export default function App() {
     navigateToRegister,
     navigateToAccount,
     navigateToPlay,
+    navigateToPlay360,
     navigateToAdmin,
     navigateToLeaderboard,
     navigateToDuel
@@ -80,6 +81,8 @@ export default function App() {
           onLogout={handleLogout}
           onNavigateToAdmin={navigateToAdmin}
           onNavigateToDuel={navigateToDuel}
+          onStartGame360={navigateToPlay360}
+          canAccessAdmin={can('floors.create') || can('locations.create') || can('roles.manage')}
         />
       )}
 
@@ -115,7 +118,17 @@ export default function App() {
         />
       )}
 
-      {currentPage === 'admin' && user?.email === 'admin@admin.com' && (
+      {currentPage === 'play360' && (
+        <Play
+          mode="360"
+          onGameComplete={handleGameComplete}
+          user={user}
+          onNavigateToAccount={navigateToAccount}
+          onLogout={handleLogout}
+        />
+      )}
+
+      {currentPage === 'admin' && (can('floors.create') || can('locations.create') || can('roles.manage')) && (
         <Admin />
       )}
 

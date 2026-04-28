@@ -41,6 +41,14 @@ export function useAuth() {
     setUser(userData)
   }
 
+  function can(permission: string) {
+    return Boolean(user?.permissions?.includes(permission))
+  }
+
+  function hasRole(role: string) {
+    return Boolean(user?.roles?.includes(role))
+  }
+
   return {
     user,
     loading,
@@ -48,7 +56,9 @@ export function useAuth() {
     register,
     logout,
     updateUser,
-    checkAuth
+    checkAuth,
+    can,
+    hasRole
   }
 }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import axios from 'axios'
+import { apiClient } from '../shared/api'
 import './Admin.css'
 
 type Floor = {
@@ -18,6 +18,7 @@ type Location = {
   name: string | null
   image_path: string
   hint: string | null
+  is_360?: number
   correct_x: number
   correct_y: number
   building?: string
@@ -35,19 +36,26 @@ export default function Admin() {
   const [locName, setLocName] = useState('')
   const mapRef = useRef<HTMLImageElement | null>(null)
   const [clickPos, setClickPos] = useState<{x:number,y:number}|null>(null)
-  const [activeTab, setActiveTab] = useState<'floors' | 'locations'>('floors')
+  const [activeTab, setActiveTab] = useState<'floors' | 'locations' | 'locations360'>('floors')
 
   useEffect(() => {
     loadFloors()
-    loadLocations()
+    loadLocations('classic')
+    loadLocations('360')
   }, [])
 
   function loadFloors() {
-    axios.get('/api/floors').then(r => setFloors(r.data))
+    apiClient.get('/api/floors').then(r => setFloors(r.data))
   }
 
-  function loadLocations() {
-    axios.get('/api/locations').then(r => setLocations(r.data))
+  function loadLocations(mode: 'classic' | '360' = 'classic') {
+    apiClient.get('/api/locations', { params: { mode } }).then(r => {
+      if (mode === '360') {
+        setLocations(prev => [...prev.filter(l => !l.is_360), ...r.data])
+      } else {
+        setLocations(prev => [...prev.filter(l => l.is_360), ...r.data])
+      }
+    })
   }
 
   function uploadFloor(e: React.FormEvent) {
@@ -58,7 +66,7 @@ export default function Admin() {
     fd.append('name', floorMeta.name)
     fd.append('building', floorMeta.building)
     fd.append('level', floorMeta.level)
-    axios.post('/api/floors', fd).then(r => {
+    apiClient.post('/api/floors', fd).then(() => {
       loadFloors()
       setFloorImage(null)
       setFloorMeta({ name: '', building: '', level: '' })
@@ -71,9 +79,10 @@ export default function Admin() {
   async function deleteFloor(id: number) {
     if (!confirm('Are you sure you want to delete this floor? All associated locations will also be deleted.')) return
     try {
-      await axios.delete(`/api/floors/${id}`)
+      await apiClient.delete(`/api/floors/${id}`)
       loadFloors()
-      loadLocations()
+      loadLocations('classic')
+      loadLocations('360')
       if (selectedFloor === id) setSelectedFloor('')
       alert('Floor deleted successfully!')
     } catch (err: any) {
@@ -100,8 +109,9 @@ export default function Admin() {
     fd.append('y', String(clickPos.y))
     fd.append('name', locName)
     fd.append('hint', hint)
-    axios.post('/api/locations', fd).then(() => {
-      loadLocations()
+    fd.append('is_360', activeTab === 'locations360' ? '1' : '0')
+    apiClient.post('/api/locations', fd).then(() => {
+      loadLocations(activeTab === 'locations360' ? '360' : 'classic')
       setLocationImage(null)
       setHint('')
       setLocName('')
@@ -115,17 +125,19 @@ export default function Admin() {
   async function deleteLocation(id: number) {
     if (!confirm('Are you sure you want to delete this location?')) return
     try {
-      await axios.delete(`/api/locations/${id}`)
-      loadLocations()
+      await apiClient.delete(`/api/locations/${id}`)
+      loadLocations('classic')
+      loadLocations('360')
       alert('Location deleted successfully!')
     } catch (err: any) {
       alert('Error deleting location: ' + (err.response?.data?.error || err.message))
     }
   }
 
-  const filteredLocations = selectedFloor 
-    ? locations.filter(loc => loc.floor_id === selectedFloor)
-    : locations
+  const visibleLocations = locations.filter(loc => (activeTab === 'locations360' ? !!loc.is_360 : !loc.is_360))
+  const filteredLocations = selectedFloor
+    ? visibleLocations.filter(loc => loc.floor_id === selectedFloor)
+    : visibleLocations
 
   return (
     <div className="admin-page">
@@ -142,7 +154,13 @@ export default function Admin() {
             className={`admin-tab ${activeTab === 'locations' ? 'active' : ''}`}
             onClick={() => setActiveTab('locations')}
           >
-            Локации ({locations.length})
+            Локации ({locations.filter(l => !l.is_360).length})
+          </button>
+          <button
+            className={`admin-tab ${activeTab === 'locations360' ? 'active' : ''}`}
+            onClick={() => setActiveTab('locations360')}
+          >
+            Локации 360 ({locations.filter(l => !!l.is_360).length})
           </button>
         </div>
       </header>
@@ -231,10 +249,10 @@ export default function Admin() {
         </div>
       )}
 
-      {activeTab === 'locations' && (
+      {(activeTab === 'locations' || activeTab === 'locations360') && (
         <div className="admin-content">
           <section className="admin-section">
-            <h2>Добавить новую локацию</h2>
+            <h2>{activeTab === 'locations360' ? 'Добавить новую 360-локацию' : 'Добавить новую локацию'}</h2>
             <div className="admin-form">
               <div className="form-row">
                 <label>Выберите этаж</label>
@@ -303,7 +321,7 @@ export default function Admin() {
                       />
                     </div>
                     <div className="form-row">
-                      <label>Фотография локации</label>
+                      <label>{activeTab === 'locations360' ? 'Панорама 360 (equirectangular)' : 'Фотография локации'}</label>
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -325,18 +343,18 @@ export default function Admin() {
           </section>
 
           <section className="admin-section">
-            <h2>Все локации</h2>
+            <h2>{activeTab === 'locations360' ? 'Все 360-локации' : 'Все локации'}</h2>
             {selectedFloor && (
               <div className="admin-filter">
                 <button 
                   className="admin-btn-filter active"
                   onClick={() => setSelectedFloor('')}
                 >
-                  Показать все ({locations.length})
+                  Показать все ({visibleLocations.length})
                 </button>
           </div>
         )}
-            {locations.length === 0 ? (
+            {visibleLocations.length === 0 ? (
               <p className="admin-empty">Локации еще не добавлены</p>
             ) : (
               <div className="admin-list">

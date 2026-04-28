@@ -19,5 +19,17 @@ const getApiBaseUrl = () => {
 
 axios.defaults.baseURL = getApiBaseUrl()
 
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 403 && !error?.response?.data?.error) {
+      error.response.data = {
+        error: 'Недостаточно прав для выполнения этого действия'
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
 export const apiClient = axios
 

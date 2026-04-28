@@ -4,16 +4,18 @@ import ResultPage from './ResultPage'
 import { ProfileMenu } from '../shared/ui'
 import { useGame } from '../features/game/hooks'
 import { gameApi } from '../shared/api'
+import PanoramaViewer from '../components/PanoramaViewer'
 
 interface PlayProps {
   onGameComplete: (score: number, rank?: number, isNewRecord?: boolean, previousBest?: number) => void
   user: any
   onNavigateToAccount: () => void
   onLogout: () => void
+  mode?: 'classic' | '360'
 }
 
-export default function Play({ onGameComplete, user, onNavigateToAccount, onLogout }: PlayProps) {
-  const game = useGame()
+export default function Play({ onGameComplete, user, onNavigateToAccount, onLogout, mode = 'classic' }: PlayProps) {
+  const game = useGame(mode)
   const {
     floors,
     locations,
@@ -236,38 +238,44 @@ export default function Play({ onGameComplete, user, onNavigateToAccount, onLogo
       {viewMode === 'photo' ? (
         <div className="play-content play-content-photo">
           <div className="play-photo-wrapper">
-            <button className="play-arrow play-arrow-left" onClick={scrollPhotoLeft}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M15 6L9 12L15 18" stroke="#372579" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            
-            <div 
-              className="play-photo-container play-photo-big" 
-              ref={photoRef}
-              onMouseDown={handlePhotoMouseDown}
-              onMouseMove={handlePhotoMouseMove}
-              onMouseUp={handlePhotoMouseUp}
-              onMouseLeave={handlePhotoMouseLeave}
-              onTouchStart={handlePhotoTouchStart}
-              onTouchMove={handlePhotoTouchMove}
-              onTouchEnd={handlePhotoTouchEnd}
-            >
-              {currentLocation && (
-                <img 
-                  className="play-photo" 
-                  src={currentLocation.image_path} 
-                  alt="Найди это место"
-                  draggable={false}
-                />
-              )}
-            </div>
+            {mode === '360' ? (
+              currentLocation ? <PanoramaViewer imageUrl={currentLocation.image_path} /> : null
+            ) : (
+              <>
+                <button className="play-arrow play-arrow-left" onClick={scrollPhotoLeft}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 6L9 12L15 18" stroke="#372579" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
 
-            <button className="play-arrow play-arrow-right" onClick={scrollPhotoRight}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M9 6L15 12L9 18" stroke="#372579" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+                <div
+                  className="play-photo-container play-photo-big"
+                  ref={photoRef}
+                  onMouseDown={handlePhotoMouseDown}
+                  onMouseMove={handlePhotoMouseMove}
+                  onMouseUp={handlePhotoMouseUp}
+                  onMouseLeave={handlePhotoMouseLeave}
+                  onTouchStart={handlePhotoTouchStart}
+                  onTouchMove={handlePhotoTouchMove}
+                  onTouchEnd={handlePhotoTouchEnd}
+                >
+                  {currentLocation && (
+                    <img
+                      className="play-photo"
+                      src={currentLocation.image_path}
+                      alt="Найди это место"
+                      draggable={false}
+                    />
+                  )}
+                </div>
+
+                <button className="play-arrow play-arrow-right" onClick={scrollPhotoRight}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 6L15 12L9 18" stroke="#372579" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </>
+            )}
           </div>
 
           <button 

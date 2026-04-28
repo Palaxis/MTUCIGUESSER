@@ -9,9 +9,9 @@ const __dirname = dirname(__filename);
 const dbPath = path.join(__dirname, 'data', 'geoguesser.sqlite');
 const db = new Database(dbPath);
 
-// Замените на ваш публичный IP
-const OLD_HOST = 'localhost';
-const NEW_HOST = '95.31.167.199';
+// Переключение на локальный запуск
+const OLD_HOST = '95.31.167.199';
+const NEW_HOST = 'localhost';
 
 console.log(`Обновление URL: ${OLD_HOST} -> ${NEW_HOST}\n`);
 

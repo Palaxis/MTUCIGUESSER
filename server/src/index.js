@@ -55,6 +55,72 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
 
+const getUserByIdStmt = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users WHERE id = ?');
+const getRolesByUserIdStmt = db.prepare(`
+  SELECT r.name
+  FROM roles r
+  JOIN user_roles ur ON ur.role_id = r.id
+  WHERE ur.user_id = ?
+`);
+const getPermissionsByUserIdStmt = db.prepare(`
+  SELECT DISTINCT p.name
+  FROM permissions p
+  JOIN role_permissions rp ON rp.permission_id = p.id
+  JOIN user_roles ur ON ur.role_id = rp.role_id
+  WHERE ur.user_id = ?
+`);
+const assignRoleByNameStmt = db.prepare(`
+  INSERT OR IGNORE INTO user_roles (user_id, role_id)
+  SELECT ?, id FROM roles WHERE name = ?
+`);
+
+function getUserRoles(userId) {
+  return getRolesByUserIdStmt.all(userId).map((row) => row.name);
+}
+
+function getUserPermissions(userId) {
+  return getPermissionsByUserIdStmt.all(userId).map((row) => row.name);
+}
+
+function buildUserWithAccess(user) {
+  const roles = getUserRoles(user.id);
+  const permissions = getUserPermissions(user.id);
+  return { ...user, roles, permissions };
+}
+
+function requireAuth(req, res, next) {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  const user = getUserByIdStmt.get(req.session.userId);
+  if (!user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  req.auth = {
+    userId: user.id,
+    user,
+    roles: getUserRoles(user.id),
+    permissions: getUserPermissions(user.id)
+  };
+  next();
+}
+
+function requirePermission(permission) {
+  return (req, res, next) => {
+    if (!req.auth) {
+      return requireAuth(req, res, () => requirePermission(permission)(req, res, next));
+    }
+    if (!req.auth.permissions.includes(permission)) {
+      return res.status(403).json({ error: 'Forbidden', requiredPermission: permission });
+    }
+    next();
+  };
+}
+
+function isOwnResource(req, targetUserId) {
+  return req.auth && Number(req.auth.userId) === Number(targetUserId);
+}
+
 // Health
 app.get('/api/health', (req, res) => {
   res.json({ ok: true });
@@ -82,7 +148,7 @@ app.get('/api/floors/:id', (req, res) => {
   }
 });
 
-app.post('/api/floors', upload.single('image'), async (req, res) => {
+app.post('/api/floors', requireAuth, requirePermission('floors.create'), upload.single('image'), async (req, res) => {
   try {
     const { name, building, level } = req.body;
     if (!req.file) return res.status(400).json({ error: 'Image required' });
@@ -111,12 +177,15 @@ app.post('/api/floors', upload.single('image'), async (req, res) => {
 // Locations
 app.get('/api/locations', (req, res) => {
   try {
+    const { mode } = req.query;
+    const is360Mode = mode === '360';
     const rows = db.prepare(`
       SELECT l.*, f.building, f.level 
       FROM locations l 
       LEFT JOIN floors f ON l.floor_id = f.id
+      WHERE l.is_360 = ?
       ORDER BY l.id DESC
-    `).all();
+    `).all(is360Mode ? 1 : 0);
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -126,7 +195,8 @@ app.get('/api/locations', (req, res) => {
 
 app.get('/api/locations/random', (req, res) => {
   try {
-    const { floor_id, exclude } = req.query;
+    const { floor_id, exclude, mode } = req.query;
+    const is360Mode = mode === '360' ? 1 : 0;
     
     // Парсим список исключённых ID
     let excludeIds = [];
@@ -139,15 +209,15 @@ app.get('/api/locations/random', (req, res) => {
       // Исключаем уже показанные локации
       const placeholders = excludeIds.map(() => '?').join(',');
       if (floor_id) {
-        row = db.prepare(`SELECT * FROM locations WHERE floor_id = ? AND id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`).get(floor_id, ...excludeIds);
+        row = db.prepare(`SELECT * FROM locations WHERE floor_id = ? AND is_360 = ? AND id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`).get(floor_id, is360Mode, ...excludeIds);
       } else {
-        row = db.prepare(`SELECT * FROM locations WHERE id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`).get(...excludeIds);
+        row = db.prepare(`SELECT * FROM locations WHERE is_360 = ? AND id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`).get(is360Mode, ...excludeIds);
       }
     } else {
       if (floor_id) {
-        row = db.prepare('SELECT * FROM locations WHERE floor_id = ? ORDER BY RANDOM() LIMIT 1').get(floor_id);
+        row = db.prepare('SELECT * FROM locations WHERE floor_id = ? AND is_360 = ? ORDER BY RANDOM() LIMIT 1').get(floor_id, is360Mode);
       } else {
-        row = db.prepare('SELECT * FROM locations ORDER BY RANDOM() LIMIT 1').get();
+        row = db.prepare('SELECT * FROM locations WHERE is_360 = ? ORDER BY RANDOM() LIMIT 1').get(is360Mode);
       }
     }
     
@@ -155,7 +225,7 @@ app.get('/api/locations/random', (req, res) => {
     // Minimal data for game (hide exact coordinates)
     const floor = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors WHERE id = ?').get(row.floor_id);
     res.json({
-      location: { id: row.id, floor_id: row.floor_id, image_path: row.image_path, hint: row.hint || null },
+      location: { id: row.id, floor_id: row.floor_id, image_path: row.image_path, hint: row.hint || null, is_360: row.is_360 === 1 },
       floor
     });
   } catch (err) {
@@ -164,9 +234,9 @@ app.get('/api/locations/random', (req, res) => {
   }
 });
 
-app.post('/api/locations', upload.single('image'), async (req, res) => {
+app.post('/api/locations', requireAuth, requirePermission('locations.create'), upload.single('image'), async (req, res) => {
   try {
-    const { floor_id, name, x, y, hint } = req.body;
+    const { floor_id, name, x, y, hint, is_360 } = req.body;
     if (!req.file) return res.status(400).json({ error: 'Image required' });
     const f = db.prepare('SELECT id FROM floors WHERE id = ?').get(floor_id);
     if (!f) return res.status(400).json({ error: 'Invalid floor_id' });
@@ -174,15 +244,21 @@ app.post('/api/locations', upload.single('image'), async (req, res) => {
     const yNum = Math.round(Number(y));
     if (!Number.isFinite(xNum) || !Number.isFinite(yNum)) return res.status(400).json({ error: 'Bad coordinates' });
     
+    const is360Flag = Number(is_360) === 1 ? 1 : 0;
+    if (is360Flag === 1 && !(req.file.mimetype || '').startsWith('image/')) {
+      return res.status(400).json({ error: '360 location must be an image file' });
+    }
+
     // Generate filename and upload to MinIO
     const timestamp = Date.now();
     const ext = path.extname(req.file.originalname) || '.png';
-    const objectName = `locations/loc_${timestamp}${ext}`;
+    const folder = is360Flag === 1 ? 'locations360' : 'locations';
+    const objectName = `${folder}/loc_${timestamp}${ext}`;
     const imageUrl = await uploadFile(req.file.buffer, objectName, req.file.mimetype);
     
-    const stmt = db.prepare('INSERT INTO locations (floor_id, name, x, y, image_path, hint) VALUES (?, ?, ?, ?, ?, ?)');
-    const info = stmt.run(floor_id, name || null, xNum, yNum, imageUrl, hint || null);
-    const created = db.prepare('SELECT id, floor_id, name, x, y, image_path, hint FROM locations WHERE id = ?').get(info.lastInsertRowid);
+    const stmt = db.prepare('INSERT INTO locations (floor_id, name, x, y, image_path, is_360, hint) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    const info = stmt.run(floor_id, name || null, xNum, yNum, imageUrl, is360Flag, hint || null);
+    const created = db.prepare('SELECT id, floor_id, name, x, y, image_path, is_360, hint FROM locations WHERE id = ?').get(info.lastInsertRowid);
     res.status(201).json(created);
   } catch (err) {
     console.error(err);
@@ -191,7 +267,7 @@ app.post('/api/locations', upload.single('image'), async (req, res) => {
 });
 
 // Delete floor
-app.delete('/api/floors/:id', async (req, res) => {
+app.delete('/api/floors/:id', requireAuth, requirePermission('floors.delete'), async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -225,7 +301,7 @@ app.delete('/api/floors/:id', async (req, res) => {
 });
 
 // Delete location
-app.delete('/api/locations/:id', async (req, res) => {
+app.delete('/api/locations/:id', requireAuth, requirePermission('locations.delete'), async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -310,10 +386,11 @@ app.post('/api/auth/register', async (req, res) => {
     const stmt = db.prepare('INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)');
     const info = stmt.run(first_name, last_name, email, password_hash);
     
-    const user = db.prepare('SELECT id, first_name, last_name, email FROM users WHERE id = ?').get(info.lastInsertRowid);
+    const user = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users WHERE id = ?').get(info.lastInsertRowid);
+    assignRoleByNameStmt.run(user.id, 'player');
     
     req.session.userId = user.id;
-    res.status(201).json({ user });
+    res.status(201).json({ user: buildUserWithAccess(user) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to register' });
@@ -338,13 +415,14 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     req.session.userId = user.id;
-    res.json({ 
-      user: { 
-        id: user.id, 
-        first_name: user.first_name, 
-        last_name: user.last_name, 
-        email: user.email 
-      } 
+    res.json({
+      user: buildUserWithAccess({
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        avatar_url: user.avatar_url
+      })
     });
   } catch (err) {
     console.error(err);
@@ -352,17 +430,8 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.get('/api/auth/me', (req, res) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
-  const user = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users WHERE id = ?').get(req.session.userId);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-
-  res.json(user);
+app.get('/api/auth/me', requireAuth, (req, res) => {
+  res.json(buildUserWithAccess(req.auth.user));
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -371,10 +440,12 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 // User management
-app.put('/api/users/:id', async (req, res) => {
+app.put('/api/users/:id', requireAuth, async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
-    if (!req.session.userId || req.session.userId !== userId) {
+    const canUpdateAny = req.auth.permissions.includes('users.update.any');
+    const canUpdateSelf = req.auth.permissions.includes('users.update.self') && isOwnResource(req, userId);
+    if (!canUpdateAny && !canUpdateSelf) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
@@ -389,8 +460,8 @@ app.put('/api/users/:id', async (req, res) => {
         .run(first_name, last_name, email, userId);
     }
 
-    const user = db.prepare('SELECT id, first_name, last_name, email FROM users WHERE id = ?').get(userId);
-    res.json(user);
+    const user = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users WHERE id = ?').get(userId);
+    res.json(buildUserWithAccess(user));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update user' });
@@ -398,9 +469,13 @@ app.put('/api/users/:id', async (req, res) => {
 });
 
 // Game results
-app.post('/api/game-results', (req, res) => {
+app.post('/api/game-results', requireAuth, requirePermission('results.create'), (req, res) => {
   try {
     const { user_id, total_score, rounds_played } = req.body;
+    if (!isOwnResource(req, user_id)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     
     if (!user_id || total_score === undefined || !rounds_played) {
       return res.status(400).json({ error: 'user_id, total_score, rounds_played required' });
@@ -444,7 +519,13 @@ app.post('/api/game-results', (req, res) => {
 });
 
 // Leaderboard
-app.get('/api/leaderboard', (req, res) => {
+app.get('/api/leaderboard', (req, res, next) => {
+  if (!req.session.userId) return next();
+  return requireAuth(req, res, next);
+}, (req, res, next) => {
+  if (!req.session.userId) return next();
+  return requirePermission('leaderboard.read')(req, res, next);
+}, (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     // Используем подзапрос для корректной работы RANK() с GROUP BY
@@ -477,10 +558,12 @@ app.get('/api/leaderboard', (req, res) => {
 });
 
 // Avatar upload
-app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
+app.post('/api/users/:id/avatar', requireAuth, upload.single('avatar'), async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
-    if (!req.session.userId || req.session.userId !== userId) {
+    const canUploadAny = req.auth.permissions.includes('users.update.any');
+    const canUploadSelf = req.auth.permissions.includes('users.avatar.upload.self') && isOwnResource(req, userId);
+    if (!canUploadAny && !canUploadSelf) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     if (!req.file) return res.status(400).json({ error: 'Avatar image required' });
@@ -499,10 +582,55 @@ app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
 
     db.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').run(avatarUrl, userId);
     const user = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users WHERE id = ?').get(userId);
-    res.json(user);
+    res.json(buildUserWithAccess(user));
   } catch (err) {
     console.error('Error uploading avatar:', err);
     res.status(500).json({ error: 'Failed to upload avatar' });
+  }
+});
+
+app.get('/api/admin/users', requireAuth, requirePermission('roles.manage'), (req, res) => {
+  try {
+    const users = db.prepare('SELECT id, first_name, last_name, email, avatar_url FROM users ORDER BY id DESC').all();
+    const withRoles = users.map((user) => ({
+      ...user,
+      roles: getUserRoles(user.id)
+    }));
+    res.json(withRoles);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to list users' });
+  }
+});
+
+app.post('/api/admin/users/:id/roles', requireAuth, requirePermission('roles.manage'), (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    const { role } = req.body || {};
+    if (!role) return res.status(400).json({ error: 'Role is required' });
+    const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const roleExists = db.prepare('SELECT id FROM roles WHERE name = ?').get(role);
+    if (!roleExists) return res.status(400).json({ error: 'Unknown role' });
+    assignRoleByNameStmt.run(userId, role);
+    res.json({ user_id: userId, roles: getUserRoles(userId) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to assign role' });
+  }
+});
+
+app.delete('/api/admin/users/:id/roles/:role', requireAuth, requirePermission('roles.manage'), (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    const roleName = req.params.role;
+    const role = db.prepare('SELECT id FROM roles WHERE name = ?').get(roleName);
+    if (!role) return res.status(400).json({ error: 'Unknown role' });
+    db.prepare('DELETE FROM user_roles WHERE user_id = ? AND role_id = ?').run(userId, role.id);
+    res.json({ user_id: userId, roles: getUserRoles(userId) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove role' });
   }
 });
 
@@ -531,9 +659,9 @@ function getRandomDuelLocation(excludeIds = []) {
   let row;
   if (excludeIds.length > 0) {
     const placeholders = excludeIds.map(() => '?').join(',');
-    row = db.prepare(`SELECT * FROM locations WHERE id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`).get(...excludeIds);
+    row = db.prepare(`SELECT * FROM locations WHERE is_360 = 0 AND id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`).get(...excludeIds);
   } else {
-    row = db.prepare('SELECT * FROM locations ORDER BY RANDOM() LIMIT 1').get();
+    row = db.prepare('SELECT * FROM locations WHERE is_360 = 0 ORDER BY RANDOM() LIMIT 1').get();
   }
   if (!row) return null;
   const floor = db.prepare('SELECT id, name, building, level, image_path, width_px, height_px FROM floors WHERE id = ?').get(row.floor_id);

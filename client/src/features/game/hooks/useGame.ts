@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { gameApi, Floor, LocationForGame } from '../../../shared/api'
+import { gameApi, Floor, LocationForGame, GameMode } from '../../../shared/api'
 
 const TOTAL_ROUNDS = 5
 
-export function useGame() {
+export function useGame(mode: GameMode = 'classic') {
   const [floors, setFloors] = useState<Floor[]>([])
   const [locations, setLocations] = useState<LocationForGame[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -23,7 +23,7 @@ export function useGame() {
 
   async function loadLocations(excludeIds: number[] = []) {
     try {
-      const response = await gameApi.getRandomLocation(excludeIds)
+      const response = await gameApi.getRandomLocation(excludeIds, mode)
       if (response.location) {
         setLocations([response.location])
         setCurrentIndex(0)
@@ -40,7 +40,7 @@ export function useGame() {
     // Загружаем первую локацию при старте игры (без исключений)
     loadLocations([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [mode])
 
   function calculateFitZoom() {
     if (!selectedFloor || floors.length === 0 || !mapContainerRef.current) return null

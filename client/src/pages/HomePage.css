@@ -209,6 +209,27 @@
   box-shadow: 0 6px 20px rgba(55, 37, 121, 0.3);
 }
 
+.home-360-btn {
+  box-sizing: border-box;
+  width: 220px;
+  height: 75px;
+  background: #ffffff;
+  border: 4px dashed #372579;
+  border-radius: 60px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 30px;
+  color: #372579;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.home-360-btn:hover {
+  background: #372579;
+  color: #fff;
+}
+
 .home-rules-btn {
   box-sizing: border-box;
   width: 75px;
@@ -278,6 +299,12 @@
     font-size: 26px;
   }
 
+  .home-360-btn {
+    width: 200px;
+    height: 65px;
+    font-size: 20px;
+  }
+
   .home-rules-btn {
     width: 65px;
     height: 65px;
@@ -332,6 +359,14 @@
     max-width: 280px;
     height: 60px;
     font-size: 24px;
+    border-width: 3px;
+  }
+
+  .home-360-btn {
+    width: 100%;
+    max-width: 280px;
+    height: 56px;
+    font-size: 20px;
     border-width: 3px;
   }
 
@@ -393,6 +428,11 @@
   .home-start-btn {
     height: 55px;
     font-size: 22px;
+  }
+
+  .home-360-btn {
+    height: 52px;
+    font-size: 18px;
   }
 
   .home-rules-btn {

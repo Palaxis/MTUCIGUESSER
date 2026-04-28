@@ -15,6 +15,7 @@ export interface LocationForGame {
   floor_id: number
   image_path: string
   hint: string | null
+  is_360?: boolean
   correct_x: number
   correct_y: number
 }
@@ -31,14 +32,19 @@ export interface GameResult {
   previousBest?: number
 }
 
+export type GameMode = 'classic' | '360'
+
 export const gameApi = {
   async getFloors(): Promise<Floor[]> {
     const response = await apiClient.get<Floor[]>('/api/floors')
     return response.data
   },
 
-  async getRandomLocation(excludeIds: number[] = []): Promise<{ location: LocationForGame }> {
-    const params = excludeIds.length > 0 ? { exclude: excludeIds.join(',') } : {}
+  async getRandomLocation(excludeIds: number[] = [], mode: GameMode = 'classic'): Promise<{ location: LocationForGame }> {
+    const params: { exclude?: string; mode?: string } = { mode }
+    if (excludeIds.length > 0) {
+      params.exclude = excludeIds.join(',')
+    }
     const response = await apiClient.get<{ location: LocationForGame }>('/api/locations/random', { params })
     return response.data
   },

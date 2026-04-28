@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export type Page = 'home' | 'login' | 'register' | 'account' | 'play' | 'admin' | 'leaderboard' | 'duel'
+export type Page = 'home' | 'login' | 'register' | 'account' | 'play' | 'play360' | 'admin' | 'leaderboard' | 'duel'
 
 export function useNavigation() {
   const [currentPage, setCurrentPage] = useState<Page>('home')
@@ -13,6 +13,7 @@ export function useNavigation() {
     navigateToRegister: () => setCurrentPage('register'),
     navigateToAccount: () => setCurrentPage('account'),
     navigateToPlay: () => setCurrentPage('play'),
+    navigateToPlay360: () => setCurrentPage('play360'),
     navigateToAdmin: () => setCurrentPage('admin'),
     navigateToLeaderboard: () => setCurrentPage('leaderboard'),
     navigateToDuel: () => setCurrentPage('duel')
